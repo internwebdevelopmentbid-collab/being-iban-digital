@@ -6,6 +6,7 @@ import Footer from "./components/layout/Footer";
 import LandingPage from "./pages/LandingPage";
 import Portfolio from "./pages/Portfolio";
 import ProductPage from "./pages/ProductPage";
+import NotFound from "./pages/NotFound";
 
 import AdminApp from "./admin/AdminApp";
 import WhatsAppSticker from "./components/global/WhatsAppSticker";

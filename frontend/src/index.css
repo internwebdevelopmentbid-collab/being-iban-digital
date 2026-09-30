@@ -1,0 +1,168 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Google+Sans+Flex:opsz,slnt,wdth,wght,ROND@8..144,-10..0,25..150,400..700,0..100&display=swap");
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #080907;
+  --bg-secondary: #11120f;
+
+  --text-primary: #f5f3ee;
+  --text-secondary: #a7a39b;
+
+  --accent-gold: #c9a66b;
+  --accent-bronze: #9a7442;
+
+  --border: #292722;
+
+  --font-google:
+    "Google Sans Flex", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+
+  font-family: var(--font-google);
+
+  font-weight: 400;
+  letter-spacing: -0.01em;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(201, 166, 107, 0.25);
+  color: #f5f3ee;
+}
+
+/* ---------------------------------
+   Typography
+--------------------------------- */
+
+.font-display {
+  font-family: var(--font-google);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+
+.font-sans {
+  font-family: var(--font-google);
+  font-weight: 400;
+}
+
+/* ---------------------------------
+   Premium marketing typography
+--------------------------------- */
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-google);
+  text-wrap: balance;
+}
+
+h1 {
+  font-weight: 500;
+  letter-spacing: -0.055em;
+}
+
+h2 {
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+
+h3 {
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+p {
+  line-height: 1.7;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* ---------------------------------
+   Google Sans Flex weights
+--------------------------------- */
+
+.font-light {
+  font-weight: 300;
+}
+
+.font-normal {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* ---------------------------------
+   Utility
+--------------------------------- */
+
+.tracking-editorial {
+  letter-spacing: 0.18em;
+}
+
+.tracking-label {
+  letter-spacing: 0.24em;
+}
+
+.tracking-tight {
+  letter-spacing: -0.045em;
+}
+
+/* ---------------------------------
+   Reduced motion
+--------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.hero-heart {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -0.045em;
+  color: #c9a66b;
+}

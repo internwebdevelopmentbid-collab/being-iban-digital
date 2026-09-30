@@ -583,38 +583,6 @@ const Footer = () => {
                   />
                 </div>
               </motion.div>
-
-              {/* -------------------------------------------------------- */}
-              {/* CONNECT                                                    */}
-              {/* -------------------------------------------------------- */}
-
-              <motion.div
-                variants={footerItem}
-                className="hidden flex-col sm:flex"
-              >
-                <h3
-                  className="
-                    mb-[25px]
-
-                    font-sans
-                    text-[11px]
-                    font-bold
-                    tracking-[0.2em]
-
-                    text-[#30251A]
-
-                    sm:mb-[30px]
-                  "
-                >
-                  CONNECT
-                </h3>
-
-                <SocialLink
-                  href="https://www.linkedin.com/"
-                  label="LinkedIn"
-                  icon={<LinkedInIcon />}
-                />
-              </motion.div>
             </div>
           </div>
 

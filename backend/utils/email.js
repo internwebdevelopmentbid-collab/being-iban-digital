@@ -19,7 +19,7 @@ const sendEmail = async (to, subject, html) => {
     });
 
     await transporter.sendMail({
-      from: `"IBAN Digital" <${process.env.EMAIL_USER}>`,
+      from: `"Being Iban Digital" <${process.env.EMAIL_USER}>`,
       to: to.trim(),
       subject,
       html,

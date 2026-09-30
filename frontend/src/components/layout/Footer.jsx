@@ -80,29 +80,6 @@ const FacebookIcon = () => {
   );
 };
 
-const LinkedInIcon = () => {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      className="h-[19px] w-[19px]"
-    >
-      <path d="M6.5 8.5H3.5V20H6.5V8.5Z" fill="currentColor" />
-
-      <path
-        d="M5 4C4.03 4 3.25 4.79 3.25 5.75C3.25 6.71 4.03 7.5 5 7.5C5.97 7.5 6.75 6.71 6.75 5.75C6.75 4.79 5.97 4 5 4Z"
-        fill="currentColor"
-      />
-
-      <path
-        d="M20.5 13.2C20.5 9.73 18.65 8.12 16.19 8.12C14.19 8.12 13.3 9.22 12.8 9.99V8.5H9.8V20H12.8V14.3C12.8 12.8 13.08 11.35 14.96 11.35C16.82 11.35 16.85 13.07 16.85 14.4V20H20.5V13.2Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-};
-
 /* -------------------------------------------------------------------------- */
 /* SOCIAL LINK                                                                */
 /* -------------------------------------------------------------------------- */
@@ -435,12 +412,12 @@ const Footer = () => {
             >
               <Link
                 to="/"
-                aria-label="Being IBAN Digital"
+                aria-label="Being Iban Digital"
                 className="flex shrink-0 items-center"
               >
                 <img
                   src={logo}
-                  alt="Being IBAN Digital"
+                  alt="Being Iban Digital"
                   className="
                     block
                     h-[52px]
@@ -522,7 +499,6 @@ const Footer = () => {
                     ["Home", "/"],
                     ["Our Works", "/portfolio"],
                     ["Services & Solutions", "/services"],
-                    ["Products", "/products"],
                   ].map(([label, path]) => (
                     <Link
                       key={path}
@@ -686,7 +662,7 @@ const Footer = () => {
                 text-[#806F5E]
               "
             >
-              © {currentYear} Being IBAN Digital. All rights reserved.
+              © {currentYear} Being Iban Digital. All rights reserved.
             </p>
 
             <button

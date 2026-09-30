@@ -186,7 +186,7 @@ const createConfirmationEmail = ({
   />
 
   <title>
-    Thank You - IBAN Digital
+    Thank You - Being Iban Digital
   </title>
 </head>
 
@@ -248,7 +248,7 @@ const createConfirmationEmail = ({
                   margin-bottom:18px;
                 "
               >
-                IBAN Digital
+                Being Iban Digital
               </div>
 
               <div
@@ -298,7 +298,7 @@ const createConfirmationEmail = ({
                 "
               >
                 Thank you for reaching out
-                to IBAN Digital. We have
+                to Being Iban Digital. We have
                 received your project enquiry
                 successfully.
               </p>
@@ -585,7 +585,7 @@ const createConfirmationEmail = ({
                   line-height:1.7;
                 "
               >
-                Being IBAN Digital
+                Being Iban Digital
                 <br />
                 Strategy · Design · Development · Growth
               </p>
@@ -747,7 +747,7 @@ export const createMeeting = async (req, res) => {
 
       await sendEmail(
         email.trim().toLowerCase(),
-        "Thank You for Your Project Enquiry — IBAN Digital",
+        "Thank You for Your Project Enquiry — Being Iban Digital",
         emailHtml,
       );
 

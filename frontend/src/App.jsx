@@ -83,10 +83,7 @@ const App = () => {
             PUBLIC FALLBACK
             ================================================= */}
 
-        {/* <Route
-          path="*"
-          element={<NotFound />}
-        /> */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {!isAdminArea && (

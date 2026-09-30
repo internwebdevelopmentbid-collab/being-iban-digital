@@ -115,30 +115,6 @@ const NotFound = () => {
                   </Link>
                 </motion.div>
               </div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  duration: 0.8,
-                  delay: 0.3,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="hidden lg:block"
-              >
-                <div className="flex h-[150px] w-[150px] items-center justify-center border border-[#C9A66B]/20">
-                  <div className="flex h-[110px] w-[110px] items-center justify-center border border-[#C9A66B]/10">
-                    <span className="font-display text-[13px] tracking-[-0.02em] text-[#C9A66B]">
-                      BEING IBAN DIGITAL
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between text-[7px] uppercase tracking-[0.25em] text-[#A7A39B]/40">
-                  <span>Being Iban Digital</span>
-                  <span>Kolkata · India</span>
-                </div>
-              </motion.div>
             </div>
 
             <div className="mt-16 h-px w-full bg-[#F5F3EE]/10" />

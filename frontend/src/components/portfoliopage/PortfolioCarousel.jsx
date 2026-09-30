@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
 
 import PortfolioWorkCard from "./PortfolioWorkCard";
 
@@ -12,38 +11,21 @@ const PortfolioCarousel = ({ category, items = [] }) => {
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | Single Item
-    |--------------------------------------------------------------------------
-    | Do not duplicate a single project.
-    */
-
+     * We always use 3 copies.
+     *
+     * This gives us a consistent one-third translation point,
+     * regardless of whether there are 2, 3, or many projects.
+     */
     if (items.length === 1) {
       return items;
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Two Items
-    |--------------------------------------------------------------------------
-    */
-
-    if (items.length === 2) {
-      return [...items, ...items];
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Three Or More Items
-    |--------------------------------------------------------------------------
-    | Duplicate the collection to create
-    | the continuous marquee effect.
-    */
 
     return [...items, ...items, ...items];
   }, [items]);
 
   const isSingleItem = items.length === 1;
+
+  const animationDuration = category.key === "video" ? 46 : 40;
 
   const getComingSoonMessage = () => {
     if (category.key === "image") {
@@ -87,9 +69,44 @@ const PortfolioCarousel = ({ category, items = [] }) => {
         }
       }}
     >
-      {/* --------------------------------------------------------------- */}
-      {/* CATEGORY HEADER */}
-      {/* --------------------------------------------------------------- */}
+      {/* ================================================================
+          MARQUEE KEYFRAMES
+      ================================================================ */}
+
+      <style>
+        {`
+          @keyframes portfolio-marquee-${category.key} {
+            from {
+              transform: translate3d(0, 0, 0);
+            }
+
+            to {
+              transform: translate3d(-33.333333%, 0, 0);
+            }
+          }
+
+          .portfolio-marquee-${category.key} {
+            animation-name: portfolio-marquee-${category.key};
+            animation-duration: ${animationDuration}s;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            animation-play-state: ${paused ? "paused" : "running"};
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .portfolio-marquee-${category.key} {
+              animation-play-state: paused;
+            }
+          }
+        `}
+      </style>
+
+      {/* ================================================================
+          CATEGORY HEADER
+      ================================================================ */}
 
       <div className="mb-7 flex items-end justify-between border-b border-[#292722] pb-5">
         <div>
@@ -111,9 +128,9 @@ const PortfolioCarousel = ({ category, items = [] }) => {
         </span>
       </div>
 
-      {/* --------------------------------------------------------------- */}
-      {/* EMPTY STATE */}
-      {/* --------------------------------------------------------------- */}
+      {/* ================================================================
+          EMPTY STATE
+      ================================================================ */}
 
       {!items.length ? (
         <div className="border border-[#292722] bg-[#11120f] px-6 py-12 sm:px-8 sm:py-16">
@@ -133,9 +150,9 @@ const PortfolioCarousel = ({ category, items = [] }) => {
         </div>
       ) : (
         <>
-          {/* ------------------------------------------------------------- */}
-          {/* CAROUSEL */}
-          {/* ------------------------------------------------------------- */}
+          {/* =============================================================
+              CAROUSEL
+          ============================================================= */}
 
           <div className="relative -mx-5 overflow-hidden px-5 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
             {/* Left edge fade */}
@@ -149,18 +166,15 @@ const PortfolioCarousel = ({ category, items = [] }) => {
                 <PortfolioWorkCard item={items[0]} />
               </div>
             ) : (
-              <motion.div
-                className="flex w-max gap-5"
-                animate={{
-                  x: paused ? undefined : ["0%", "-33.333333%"],
-                }}
-                transition={{
-                  x: {
-                    duration: category.key === "video" ? 46 : 40,
-                    repeat: Infinity,
-                    ease: "linear",
-                  },
-                }}
+              <div
+                className={`
+                  portfolio-marquee-${category.key}
+                  flex
+                  w-max
+                  gap-5
+                  transform-gpu
+                  [backface-visibility:hidden]
+                `}
               >
                 {carouselItems.map((item, index) => (
                   <PortfolioWorkCard
@@ -168,13 +182,13 @@ const PortfolioCarousel = ({ category, items = [] }) => {
                     item={item}
                   />
                 ))}
-              </motion.div>
+              </div>
             )}
           </div>
 
-          {/* ------------------------------------------------------------- */}
-          {/* CAROUSEL META */}
-          {/* ------------------------------------------------------------- */}
+          {/* =============================================================
+              CAROUSEL META
+          ============================================================= */}
 
           <div className="mt-5 flex items-center justify-between">
             <span className="font-sans text-[8px] uppercase tracking-[0.25em] text-[#55534e]">

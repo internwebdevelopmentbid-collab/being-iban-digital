@@ -1,9 +1,16 @@
 import { useState } from "react";
-
 import { getMediaUrl } from "../../config/api";
+
+// ============================================================
+// Portfolio Work Card
+// ============================================================
 
 const PortfolioWorkCard = ({ item }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  // ============================================================
+  // Category Checks
+  // ============================================================
 
   const isWebsite = item?.category === "website";
 
@@ -11,18 +18,38 @@ const PortfolioWorkCard = ({ item }) => {
 
   const isVideo = item?.category === "video";
 
+  // ============================================================
+  // Media Source
+  // ============================================================
+
   const visualSource = isWebsite
     ? item?.thumbnail || item?.mediaUrl
     : item?.mediaUrl;
 
   const mediaUrl = getMediaUrl(visualSource);
 
+  // ============================================================
+  // Card Content
+  // ============================================================
+
   const cardContent = (
     <>
+      {/* ======================================================
+          Media Container
+          ====================================================== */}
+
       <div className="relative h-[340px] overflow-hidden bg-[#11120f] sm:h-[390px] lg:h-[430px]">
+        {/* ====================================================
+            Loading Placeholder
+            ==================================================== */}
+
         {!imageLoaded && (
           <div className="absolute inset-0 animate-pulse bg-[#171813]" />
         )}
+
+        {/* ====================================================
+            Video / Image Media
+            ==================================================== */}
 
         {isVideo && mediaUrl ? (
           <video
@@ -57,9 +84,15 @@ const PortfolioWorkCard = ({ item }) => {
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#080907] via-[#080907]/10 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-60" />
+        {/* ====================================================
+            Hover Border / Glow
+            ==================================================== */}
 
         <div className="pointer-events-none absolute inset-0 border border-transparent transition-all duration-500 group-hover:border-[#c9a66b]/50 group-hover:shadow-[inset_0_0_45px_rgba(201,166,107,0.12),0_0_45px_rgba(201,166,107,0.12)]" />
+
+        {/* ====================================================
+            Category / Custom Tags
+            ==================================================== */}
 
         <div className="absolute left-5 top-5 flex items-center gap-2">
           <span className="border border-[#f5f3ee]/20 bg-[#080907]/70 px-2.5 py-1.5 font-sans text-[8px] font-semibold uppercase tracking-[0.18em] text-[#f5f3ee] backdrop-blur-sm">
@@ -72,6 +105,10 @@ const PortfolioWorkCard = ({ item }) => {
             </span>
           )}
         </div>
+
+        {/* ====================================================
+            Website External Link Icon
+            ==================================================== */}
 
         {isWebsite && (
           <div className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center border border-[#f5f3ee]/20 bg-[#080907]/70 text-[#f5f3ee] backdrop-blur-sm transition-all duration-500 group-hover:border-[#c9a66b] group-hover:bg-[#c9a66b] group-hover:text-[#080907]">
@@ -88,6 +125,7 @@ const PortfolioWorkCard = ({ item }) => {
                 strokeWidth="1.4"
                 strokeLinecap="round"
               />
+
               <path
                 d="M5 3H12V10"
                 stroke="currentColor"
@@ -98,6 +136,10 @@ const PortfolioWorkCard = ({ item }) => {
             </svg>
           </div>
         )}
+
+        {/* ====================================================
+            Card Information
+            ==================================================== */}
 
         <div className="absolute bottom-5 left-5 right-5">
           {item?.clientName?.trim() && (
@@ -114,6 +156,10 @@ const PortfolioWorkCard = ({ item }) => {
     </>
   );
 
+  // ============================================================
+  // Website Card
+  // ============================================================
+
   if (isWebsite && item?.projectUrl) {
     return (
       <a
@@ -127,11 +173,19 @@ const PortfolioWorkCard = ({ item }) => {
     );
   }
 
+  // ============================================================
+  // Standard Card
+  // ============================================================
+
   return (
     <article className="group block w-[280px] shrink-0 border border-[#292722] bg-[#11120f] transition-all duration-500 hover:-translate-y-2 hover:border-[#c9a66b]/40 hover:shadow-[0_18px_60px_rgba(201,166,107,0.1)] sm:w-[360px] lg:w-[420px]">
       {cardContent}
     </article>
   );
 };
+
+// ============================================================
+// Export
+// ============================================================
 
 export default PortfolioWorkCard;

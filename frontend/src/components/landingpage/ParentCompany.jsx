@@ -730,8 +730,7 @@ const ParentCompany = () => {
                   Powered by{" "}
                   <span className="text-[#FF0000]">
                     Being Iban Entertainments
-                  </span>{" "}
-                  Pvt. Ltd.
+                  </span>
                 </motion.h2>
 
                 {/* Description */}
@@ -758,7 +757,7 @@ const ParentCompany = () => {
                 >
                   Being Iban Digital proudly operates under the vision of{" "}
                   <span className="text-[#D8D4CB]">
-                    Being Iban Entertainment Pvt. Ltd.
+                    Being Iban Entertainments
                   </span>
                   , blending entertainment-grade creativity with modern
                   technology, digital strategy, branding, and performance

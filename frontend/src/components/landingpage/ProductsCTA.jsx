@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import OutlineButton from "../global/OutlineButton";
 
@@ -161,8 +161,6 @@ const BackgroundAccents = () => {
         overflow-hidden
       "
     >
-      {/* Central atmospheric glow */}
-
       <div
         className="
           absolute
@@ -177,8 +175,6 @@ const BackgroundAccents = () => {
           blur-[120px]
         "
       />
-
-      {/* Structural vertical lines */}
 
       <div
         className="
@@ -213,8 +209,6 @@ const BackgroundAccents = () => {
         "
       />
 
-      {/* Structural horizontal lines */}
-
       <div
         className="
           absolute
@@ -237,10 +231,6 @@ const BackgroundAccents = () => {
         "
       />
 
-      {/* ================================================================== */}
-      {/* GOLD PULSES                                                        */}
-      {/* ================================================================== */}
-
       <GoldPulse className="left-[8%] top-[17%]" delay={0} size="large" />
 
       <GoldPulse className="left-[22%] top-[67%]" delay={1.1} />
@@ -259,12 +249,6 @@ const BackgroundAccents = () => {
 
       <GoldPulse className="left-[15%] top-[91%]" delay={2.4} />
 
-      {/* ================================================================== */}
-      {/* FLOATING DIGITAL / GROWTH ICONS                                    */}
-      {/* ================================================================== */}
-
-      {/* Search / SEO */}
-
       <GrowthElement
         icon={Search}
         size="large"
@@ -273,13 +257,10 @@ const BackgroundAccents = () => {
         className="
           left-[5%]
           top-[35%]
-
           max-[700px]:left-[3%]
           max-[700px]:top-[32%]
         "
       />
-
-      {/* Growth / performance */}
 
       <GrowthElement
         icon={TrendingUp}
@@ -289,13 +270,10 @@ const BackgroundAccents = () => {
         className="
           right-[7%]
           top-[18%]
-
           max-[700px]:right-[4%]
           max-[700px]:top-[20%]
         "
       />
-
-      {/* Analytics */}
 
       <GrowthElement
         icon={BarChart3}
@@ -305,13 +283,10 @@ const BackgroundAccents = () => {
         className="
           left-[27%]
           top-[55%]
-
           max-[700px]:left-[12%]
           max-[700px]:top-[58%]
         "
       />
-
-      {/* Social reach */}
 
       <GrowthElement
         icon={Share2}
@@ -321,13 +296,10 @@ const BackgroundAccents = () => {
         className="
           right-[25%]
           top-[49%]
-
           max-[700px]:right-[11%]
           max-[700px]:top-[50%]
         "
       />
-
-      {/* Audience */}
 
       <GrowthElement
         icon={Users}
@@ -337,13 +309,10 @@ const BackgroundAccents = () => {
         className="
           right-[8%]
           top-[76%]
-
           max-[700px]:right-[5%]
           max-[700px]:top-[73%]
         "
       />
-
-      {/* Targeting / conversion */}
 
       <GrowthElement
         icon={Target}
@@ -353,13 +322,10 @@ const BackgroundAccents = () => {
         className="
           left-[8%]
           top-[80%]
-
           max-[700px]:left-[5%]
           max-[700px]:top-[78%]
         "
       />
-
-      {/* Engagement */}
 
       <GrowthElement
         icon={MousePointer2}
@@ -369,7 +335,6 @@ const BackgroundAccents = () => {
         className="
           right-[32%]
           top-[34%]
-
           max-[700px]:right-[14%]
           max-[700px]:top-[35%]
         "
@@ -416,9 +381,27 @@ const RevealWord = ({ children, progress, start, end, className = "" }) => {
 /* Reveal Title                                                               */
 /* -------------------------------------------------------------------------- */
 
-const RevealTitle = ({ progress }) => {
+const RevealTitle = ({ progress, isSmallScreen = false }) => {
   const firstLine = ["Choose", "the"];
   const secondLine = ["next", "move."];
+
+  /*
+   * Desktop:
+   * The title keeps the original reveal timing.
+   *
+   * Mobile/tablet:
+   * The complete title finishes much earlier so the
+   * user does not need to scroll excessively just
+   * to reveal the heading.
+   */
+
+  const revealDuration = isSmallScreen ? 0.14 : 0.24;
+
+  const firstLineSpacing = isSmallScreen ? 0.045 : 0.08;
+
+  const secondLineStart = isSmallScreen ? 0.075 : 0.18;
+
+  const secondLineSpacing = isSmallScreen ? 0.045 : 0.08;
 
   return (
     <h2
@@ -434,8 +417,9 @@ const RevealTitle = ({ progress }) => {
     >
       <span className="block">
         {firstLine.map((word, index) => {
-          const start = index * 0.08;
-          const end = start + 0.24;
+          const start = index * firstLineSpacing;
+
+          const end = start + revealDuration;
 
           return (
             <span key={word}>
@@ -453,8 +437,9 @@ const RevealTitle = ({ progress }) => {
 
       <span className="block text-[#c9a66b]">
         {secondLine.map((word, index) => {
-          const start = 0.18 + index * 0.08;
-          const end = start + 0.24;
+          const start = secondLineStart + index * secondLineSpacing;
+
+          const end = start + revealDuration;
 
           return (
             <span key={word}>
@@ -506,14 +491,10 @@ const PackageRow = ({ packageData, index, progress }) => {
         border-t
         border-[#292722]
         py-[26px]
-
         sm:py-[30px]
-
         lg:py-[34px]
       "
     >
-      {/* Animated gold line */}
-
       <motion.div
         style={{
           scaleX: lineScale,
@@ -534,12 +515,10 @@ const PackageRow = ({ packageData, index, progress }) => {
           flex
           flex-col
           gap-[18px]
-
           sm:grid
           sm:grid-cols-[55px_minmax(220px,0.85fr)_minmax(280px,1.5fr)]
           sm:items-center
           sm:gap-[28px]
-
           lg:grid-cols-[70px_minmax(300px,0.85fr)_minmax(400px,1.4fr)_auto]
           lg:gap-[40px]
         "
@@ -566,7 +545,6 @@ const PackageRow = ({ packageData, index, progress }) => {
                 uppercase
                 tracking-[0.2em]
                 text-[#c9a66b]
-
                 sm:hidden
               "
             >
@@ -591,10 +569,8 @@ const PackageRow = ({ packageData, index, progress }) => {
               bg-[#0b0c0a]
               transition-all
               duration-500
-
               group-hover:border-[#c9a66b]/40
               group-hover:bg-[#c9a66b]/[0.025]
-
               sm:h-[46px]
               sm:w-[46px]
             "
@@ -639,7 +615,6 @@ const PackageRow = ({ packageData, index, progress }) => {
             font-light
             leading-[1.75]
             text-[#77736b]
-
             sm:text-[11px]
           "
         >
@@ -664,7 +639,6 @@ const PackageRow = ({ packageData, index, progress }) => {
               uppercase
               tracking-[0.2em]
               text-[#c9a66b]
-
               lg:inline-flex
             "
           >
@@ -683,24 +657,65 @@ const PackageRow = ({ packageData, index, progress }) => {
 const ProductsCTA = () => {
   const sectionRef = useRef(null);
 
+  /*
+   * Detect phone + tablet.
+   *
+   * This only controls animation physics/timing.
+   * It does not change the component layout.
+   */
+
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+
+    const updateScreenSize = () => {
+      setIsSmallScreen(mediaQuery.matches);
+    };
+
+    updateScreenSize();
+
+    mediaQuery.addEventListener("change", updateScreenSize);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateScreenSize);
+    };
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
 
   /*
-   * Smooth the raw scroll progress before using it for animation.
+   * ------------------------------------------------------------------------
+   * Scroll smoothing
+   * ------------------------------------------------------------------------
    *
-   * This is the main change that makes the entire section feel less
-   * mechanical and prevents small scroll-frame jumps from being visible.
+   * Phone/tablet:
+   * Faster and lighter spring so the animation catches
+   * up with finger scrolling instead of feeling stuck.
+   *
+   * Desktop:
+   * Keep the original weighted spring.
    */
-  const rawSequenceProgress = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
-  const sequenceProgress = useSpring(rawSequenceProgress, {
-    stiffness: 110,
-    damping: 28,
-    mass: 0.35,
-  });
+  const sequenceProgress = useSpring(
+    scrollYProgress,
+    isSmallScreen
+      ? {
+          stiffness: 185,
+          damping: 34,
+          mass: 0.2,
+          restDelta: 0.001,
+        }
+      : {
+          stiffness: 110,
+          damping: 28,
+          mass: 0.35,
+          restDelta: 0.001,
+        },
+  );
 
   /* ---------------------------------------------------------------------- */
   /* Title                                                                   */
@@ -765,10 +780,8 @@ const ProductsCTA = () => {
             w-[calc(100%-44px)]
             max-w-[1400px]
             py-[60px]
-
             sm:w-[calc(100%-80px)]
             sm:py-[75px]
-
             lg:py-[85px]
           "
         >
@@ -781,7 +794,6 @@ const ProductsCTA = () => {
               grid
               grid-cols-1
               gap-[35px]
-
               lg:grid-cols-[0.8fr_1.7fr]
               lg:items-end
               lg:gap-[90px]
@@ -836,7 +848,10 @@ const ProductsCTA = () => {
 
             {/* Main title */}
 
-            <RevealTitle progress={sequenceProgress} />
+            <RevealTitle
+              progress={sequenceProgress}
+              isSmallScreen={isSmallScreen}
+            />
           </div>
 
           {/* ============================================================= */}
@@ -849,7 +864,6 @@ const ProductsCTA = () => {
             }}
             className="
               mt-[48px]
-
               max-[700px]:mt-[38px]
             "
           >
@@ -880,10 +894,8 @@ const ProductsCTA = () => {
               bg-[#0b0c0a]
               px-[24px]
               py-[28px]
-
               sm:px-[32px]
               sm:py-[34px]
-
               lg:px-[42px]
               lg:py-[38px]
             "
@@ -926,7 +938,6 @@ const ProductsCTA = () => {
                 flex
                 flex-col
                 gap-[28px]
-
                 lg:flex-row
                 lg:items-end
                 lg:justify-between
@@ -954,7 +965,6 @@ const ProductsCTA = () => {
                     text-[10px]
                     leading-[1.75]
                     text-[#77736b]
-
                     sm:text-[11px]
                   "
                 >
@@ -975,7 +985,6 @@ const ProductsCTA = () => {
                   border-[#c9a66b]/55
                   px-[20px]
                   hover:border-[#c9a66b]
-
                   max-[550px]:w-full
                 "
               >
@@ -1011,7 +1020,6 @@ const ProductsCTA = () => {
               uppercase
               tracking-[0.28em]
               text-[#4f4c46]
-
               max-[550px]:mt-[25px]
             "
           >

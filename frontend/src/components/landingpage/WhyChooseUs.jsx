@@ -7,13 +7,43 @@ import {
   useReducedMotion,
 } from "framer-motion";
 
+/* -------------------------------------------------------------------------- */
+/* SCREEN SIZE                                                                 */
+/* -------------------------------------------------------------------------- */
+
+function useIsSmallScreen(breakpoint = 1024) {
+  const [isSmallScreen, setIsSmallScreen] = React.useState(false);
+
+  React.useEffect(() => {
+    const media = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+
+    const update = () => {
+      setIsSmallScreen(media.matches);
+    };
+
+    update();
+
+    media.addEventListener("change", update);
+
+    return () => media.removeEventListener("change", update);
+  }, [breakpoint]);
+
+  return isSmallScreen;
+}
+
+/* -------------------------------------------------------------------------- */
+/* MOBILE                                                                      */
+/* -------------------------------------------------------------------------- */
+
 function useIsMobile(breakpoint = 640) {
   const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
     const media = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
 
-    const update = () => setIsMobile(media.matches);
+    const update = () => {
+      setIsMobile(media.matches);
+    };
 
     update();
 
@@ -24,6 +54,10 @@ function useIsMobile(breakpoint = 640) {
 
   return isMobile;
 }
+
+/* -------------------------------------------------------------------------- */
+/* POINTS                                                                      */
+/* -------------------------------------------------------------------------- */
 
 const points = [
   {
@@ -53,11 +87,9 @@ const points = [
   },
 ];
 
-/*
-|--------------------------------------------------------------------------
-| GOLDEN BACKGROUND DOTS
-|--------------------------------------------------------------------------
-*/
+/* -------------------------------------------------------------------------- */
+/* GOLDEN BACKGROUND DOTS                                                      */
+/* -------------------------------------------------------------------------- */
 
 const goldenDots = [
   {
@@ -132,48 +164,44 @@ const goldenDots = [
   },
 ];
 
-/*
-|--------------------------------------------------------------------------
-| POINT CARD
-|--------------------------------------------------------------------------
-*/
+/* -------------------------------------------------------------------------- */
+/* POINT CARD                                                                  */
+/* -------------------------------------------------------------------------- */
 
-function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
+function PointCard({
+  point,
+  index,
+  progress,
+  isMobile,
+  isSmallScreen,
+  reducedMotion,
+}) {
   /*
-   * ============================================================
-   * CARD TIMING
-   * ============================================================
+   * Desktop:
+   *   01 -> 0.36
+   *   02 -> 0.47
+   *   03 -> 0.58
+   *   04 -> 0.69
+   *   05 -> 0.80
    *
-   * Original timing is preserved.
+   * Mobile/tablet:
+   *   01 -> 0.18
+   *   02 -> 0.27
+   *   03 -> 0.36
+   *   04 -> 0.45
+   *   05 -> 0.54
    *
-   * Card 01 -> 0.36
-   * Card 02 -> 0.47
-   * Card 03 -> 0.58
-   * Card 04 -> 0.69
-   * Card 05 -> 0.80
-   *
-   * Each card takes 0.065 of the scroll progress to enter.
+   * This is the main change that makes the section
+   * require much less scrolling on smaller screens.
    */
 
-  const cardStart = 0.36 + index * 0.11;
-  const cardEnterEnd = cardStart + 0.065;
+  const cardStart = isSmallScreen ? 0.18 + index * 0.09 : 0.36 + index * 0.11;
 
-  /*
-   * ============================================================
-   * STACK POSITION
-   * ============================================================
-   *
-   * ORIGINAL VALUES — UNCHANGED
-   */
+  const cardEnterEnd = isSmallScreen ? cardStart + 0.055 : cardStart + 0.065;
 
   const stackX = index * (isMobile ? 10 : 22);
-  const stackY = index * (isMobile ? 12 : 18);
 
-  /*
-   * ============================================================
-   * ENTRY PROGRESS
-   * ============================================================
-   */
+  const stackY = index * (isMobile ? 12 : 18);
 
   const entryProgress = useTransform(progress, (value) => {
     if (value <= cardStart) {
@@ -186,71 +214,83 @@ function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
 
     const raw = (value - cardStart) / (cardEnterEnd - cardStart);
 
-    /*
-     * Smoothstep gives the same start/end positions,
-     * but removes the harsh linear transition.
-     */
     return raw * raw * (3 - 2 * raw);
   });
 
-  /*
-   * ============================================================
-   * INNER CARD X
-   * ============================================================
-   *
-   * ORIGINAL RANGE — UNCHANGED
-   */
-
   const rawEntryX = useTransform(entryProgress, [0, 1], ["-150%", "0%"]);
 
-  const entryX = useSpring(rawEntryX, {
-    stiffness: reducedMotion ? 1000 : 140,
-    damping: reducedMotion ? 100 : 28,
-    mass: reducedMotion ? 0.1 : 0.5,
-  });
-
-  /*
-   * ============================================================
-   * INNER CARD Y
-   * ============================================================
-   *
-   * ORIGINAL RANGE — UNCHANGED
-   */
+  const entryX = useSpring(
+    rawEntryX,
+    reducedMotion
+      ? {
+          stiffness: 1000,
+          damping: 100,
+          mass: 0.1,
+        }
+      : isSmallScreen
+        ? {
+            stiffness: 240,
+            damping: 34,
+            mass: 0.18,
+            restDelta: 0.001,
+          }
+        : {
+            stiffness: 140,
+            damping: 28,
+            mass: 0.5,
+            restDelta: 0.001,
+          },
+  );
 
   const rawEntryY = useTransform(entryProgress, [0, 1], ["-5vh", "0vh"]);
 
-  const entryY = useSpring(rawEntryY, {
-    stiffness: reducedMotion ? 1000 : 140,
-    damping: reducedMotion ? 100 : 28,
-    mass: reducedMotion ? 0.1 : 0.5,
-  });
-
-  /*
-   * ============================================================
-   * INNER CARD SCALE
-   * ============================================================
-   *
-   * ORIGINAL RANGE — UNCHANGED
-   */
+  const entryY = useSpring(
+    rawEntryY,
+    reducedMotion
+      ? {
+          stiffness: 1000,
+          damping: 100,
+          mass: 0.1,
+        }
+      : isSmallScreen
+        ? {
+            stiffness: 240,
+            damping: 34,
+            mass: 0.18,
+            restDelta: 0.001,
+          }
+        : {
+            stiffness: 140,
+            damping: 28,
+            mass: 0.5,
+            restDelta: 0.001,
+          },
+  );
 
   const rawEntryScale = useTransform(entryProgress, [0, 1], [0.94, 1]);
 
-  const entryScale = useSpring(rawEntryScale, {
-    stiffness: reducedMotion ? 1000 : 150,
-    damping: reducedMotion ? 100 : 30,
-    mass: reducedMotion ? 0.1 : 0.45,
-  });
-
-  /*
-   * ============================================================
-   * OPACITY
-   * ============================================================
-   *
-   * Original opacity was always 1.
-   * Keeping it exactly that way preserves the original visual.
-   */
-
-  const entryOpacity = 1;
+  const entryScale = useSpring(
+    rawEntryScale,
+    reducedMotion
+      ? {
+          stiffness: 1000,
+          damping: 100,
+          mass: 0.1,
+        }
+      : isSmallScreen
+        ? {
+            stiffness: 260,
+            damping: 36,
+            mass: 0.16,
+            restDelta: 0.001,
+          }
+        : {
+            stiffness: 150,
+            damping: 30,
+            mass: 0.45,
+            restDelta: 0.001,
+          },
+  );
 
   return (
     <motion.div
@@ -273,12 +313,6 @@ function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
         zIndex: 20 + index,
       }}
     >
-      {/*
-       * ========================================================
-       * INNER ENTRY CARD
-       * ========================================================
-       */}
-
       <motion.div
         className="
           relative
@@ -295,20 +329,18 @@ function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
           sm:px-8
           sm:py-9
 
-          md:rounded-[28px]
-          md:px-14
-          md:py-14
+          lg:rounded-[28px]
+          lg:px-14
+          lg:py-14
         "
         style={{
           x: entryX,
           y: entryY,
           scale: entryScale,
-          opacity: entryOpacity,
+          opacity: 1,
           willChange: "transform",
         }}
       >
-        {/* Large background number */}
-
         <div
           className="
             pointer-events-none
@@ -330,8 +362,6 @@ function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
         </div>
 
         <div className="relative z-10">
-          {/* Eyebrow */}
-
           <div className="mb-5 flex items-center gap-3">
             <span className="h-px w-8 bg-[#C9A45C]/70" />
 
@@ -339,8 +369,6 @@ function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
               Why choose us
             </span>
           </div>
-
-          {/* Title */}
 
           <h3
             className="
@@ -359,8 +387,6 @@ function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
             {point.title}
           </h3>
 
-          {/* Description */}
-
           <p
             className="
               mt-4
@@ -378,44 +404,39 @@ function PointCard({ point, index, progress, total, isMobile, reducedMotion }) {
           </p>
         </div>
 
-        {/* Bottom decorative line */}
-
         <div className="absolute bottom-0 left-0 h-px w-full bg-[#C9A45C]/20" />
       </motion.div>
     </motion.div>
   );
 }
 
-/*
-|--------------------------------------------------------------------------
-| MAIN COMPONENT
-|--------------------------------------------------------------------------
-*/
+/* -------------------------------------------------------------------------- */
+/* MAIN COMPONENT                                                              */
+/* -------------------------------------------------------------------------- */
 
 export default function WhyChooseUs() {
   const sectionRef = useRef(null);
 
   const isMobile = useIsMobile();
-
+  const isSmallScreen = useIsSmallScreen();
   const reducedMotion = useReducedMotion();
 
   /*
-   * ============================================================
+   * ------------------------------------------------------------------------
    * SECTION HEIGHT
-   * ============================================================
+   * ------------------------------------------------------------------------
    *
-   * ORIGINAL VALUES — UNCHANGED
+   * Desktop keeps the original long sequence.
+   *
+   * Phone/tablet get a significantly shorter section.
+   * This directly reduces the physical amount of scrolling required.
    */
 
-  const sectionHeight = isMobile
-    ? 620 + points.length * 58
-    : 700 + points.length * 70;
-
-  /*
-   * ============================================================
-   * RAW SCROLL PROGRESS
-   * ============================================================
-   */
+  const sectionHeight = isSmallScreen
+    ? 560 + points.length * 42
+    : isMobile
+      ? 620 + points.length * 58
+      : 700 + points.length * 70;
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -423,136 +444,144 @@ export default function WhyChooseUs() {
   });
 
   /*
-   * ============================================================
-   * SMOOTH SCROLL PROGRESS
-   * ============================================================
+   * ------------------------------------------------------------------------
+   * SCROLL SMOOTHING
+   * ------------------------------------------------------------------------
    *
-   * This is the main animation improvement.
-   *
-   * The actual scroll range and all original transform values
-   * remain unchanged. The spring simply prevents every frame
-   * from snapping directly to the raw scroll position.
+   * The spring is lighter on small screens so it doesn't
+   * create the impression that the animation is lagging
+   * behind the shorter scroll sequence.
    */
 
-  const smoothScrollProgress = useSpring(scrollYProgress, {
-    stiffness: reducedMotion ? 1000 : 90,
-    damping: reducedMotion ? 100 : 30,
-    mass: reducedMotion ? 0.1 : 0.45,
-  });
+  const smoothScrollProgress = useSpring(
+    scrollYProgress,
+    reducedMotion
+      ? {
+          stiffness: 1000,
+          damping: 100,
+          mass: 0.1,
+        }
+      : isSmallScreen
+        ? {
+            stiffness: 220,
+            damping: 38,
+            mass: 0.18,
+            restDelta: 0.001,
+          }
+        : {
+            stiffness: 90,
+            damping: 30,
+            mass: 0.45,
+            restDelta: 0.001,
+          },
+  );
 
   /*
-   * ============================================================
+   * ------------------------------------------------------------------------
    * TITLE X
-   * ============================================================
+   * ------------------------------------------------------------------------
    *
-   * ORIGINAL VALUES — UNCHANGED
+   * Small screens finish the title movement much earlier.
    */
 
   const titleX = useTransform(
     smoothScrollProgress,
-    [0, 0.08, 0.18, 0.27, 0.91, 0.955, 1],
-    isMobile
+    isSmallScreen
+      ? [0, 0.05, 0.11, 0.18, 0.72, 0.82, 1]
+      : [0, 0.08, 0.18, 0.27, 0.91, 0.955, 1],
+    isSmallScreen
       ? ["-105vw", "-8vw", "18vw", "24vw", "24vw", "75vw", "125vw"]
-      : ["-105vw", "-12vw", "28vw", "45vw", "45vw", "90vw", "155vw"],
+      : isMobile
+        ? ["-105vw", "-8vw", "18vw", "24vw", "24vw", "75vw", "125vw"]
+        : ["-105vw", "-12vw", "28vw", "45vw", "45vw", "90vw", "155vw"],
   );
 
   /*
-   * ============================================================
+   * ------------------------------------------------------------------------
    * TITLE Y
-   * ============================================================
-   *
-   * ORIGINAL VALUES — UNCHANGED
+   * ------------------------------------------------------------------------
    */
 
   const titleY = useTransform(
     smoothScrollProgress,
-    [0, 0.12, 0.27, 0.91, 0.96, 1],
+    isSmallScreen
+      ? [0, 0.07, 0.18, 0.72, 0.84, 1]
+      : [0, 0.12, 0.27, 0.91, 0.96, 1],
     ["6vh", "0vh", "-3vh", "-3vh", "-3vh", "-3vh"],
   );
 
   /*
-   * ============================================================
+   * ------------------------------------------------------------------------
    * TITLE SCALE
-   * ============================================================
-   *
-   * ORIGINAL VALUES — UNCHANGED
+   * ------------------------------------------------------------------------
    */
 
   const titleScale = useTransform(
     smoothScrollProgress,
-    [0, 0.08, 0.18, 0.27, 0.91, 0.96, 1],
-    isMobile
+    isSmallScreen
+      ? [0, 0.05, 0.11, 0.18, 0.72, 0.84, 1]
+      : [0, 0.08, 0.18, 0.27, 0.91, 0.96, 1],
+    isSmallScreen
       ? [0.72, 0.92, 0.68, 0.58, 0.58, 0.58, 0.58]
-      : [0.82, 1, 0.76, 0.62, 0.62, 0.62, 0.62],
+      : isMobile
+        ? [0.72, 0.92, 0.68, 0.58, 0.58, 0.58, 0.58]
+        : [0.82, 1, 0.76, 0.62, 0.62, 0.62, 0.62],
   );
 
   /*
-   * ============================================================
+   * ------------------------------------------------------------------------
    * CARD STACK EXIT
-   * ============================================================
+   * ------------------------------------------------------------------------
    *
-   * ORIGINAL VALUES — UNCHANGED
+   * Desktop:
+   *   exit starts at 0.91
+   *
+   * Phone/tablet:
+   *   exit starts at 0.72
+   *
+   * This is what prevents the user from needing to
+   * scroll through a large dead zone after the cards.
    */
 
   const stackX = useTransform(
     smoothScrollProgress,
-    [0.91, 0.955, 1],
+    isSmallScreen ? [0.72, 0.82, 1] : [0.91, 0.955, 1],
     ["0vw", "45vw", "110vw"],
   );
 
-  /*
-   * ============================================================
-   * CARD STACK Y
-   * ============================================================
-   *
-   * ORIGINAL VALUES — UNCHANGED
-   */
-
   const stackY = useTransform(
     smoothScrollProgress,
-    [0.91, 0.96, 1],
+    isSmallScreen ? [0.72, 0.84, 1] : [0.91, 0.96, 1],
     ["0vh", "0vh", "-3vh"],
   );
 
-  /*
-   * ============================================================
-   * STACK OPACITY
-   * ============================================================
-   *
-   * ORIGINAL VALUES — UNCHANGED
-   */
-
   const stackOpacity = useTransform(
     smoothScrollProgress,
-    [0.91, 0.96, 1],
+    isSmallScreen ? [0.72, 0.82, 1] : [0.91, 0.96, 1],
     [1, 0.4, 0],
   );
 
   /*
-   * ============================================================
+   * ------------------------------------------------------------------------
    * FINAL BLACK SCREEN
-   * ============================================================
-   *
-   * ORIGINAL VALUES — UNCHANGED
+   * ------------------------------------------------------------------------
    */
 
   const finalBlackOpacity = useTransform(
     smoothScrollProgress,
-    [0.95, 0.98, 1],
+    isSmallScreen ? [0.82, 0.91, 1] : [0.95, 0.98, 1],
     [0, 0.7, 1],
   );
 
   /*
-   * ============================================================
+   * ------------------------------------------------------------------------
    * PROGRESS BAR
-   * ============================================================
-   *
-   * ORIGINAL VALUES — UNCHANGED
+   * ------------------------------------------------------------------------
    */
 
   const progressOpacity = useTransform(
     smoothScrollProgress,
-    [0.91, 0.98],
+    isSmallScreen ? [0.78, 0.9] : [0.91, 0.98],
     [1, 0],
   );
 
@@ -564,14 +593,14 @@ export default function WhyChooseUs() {
         height: `${sectionHeight}vh`,
       }}
     >
-      {/* ========================================================
-          STICKY VIEWPORT
-      ========================================================= */}
+      {/* ================================================================== */}
+      {/* STICKY VIEWPORT                                                     */}
+      {/* ================================================================== */}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#080907]">
-        {/* ======================================================
-            AMBIENT GOLDEN GLOW
-        ======================================================= */}
+        {/* ================================================================ */}
+        {/* AMBIENT GOLDEN GLOW                                               */}
+        {/* ================================================================ */}
 
         <div
           aria-hidden="true"
@@ -612,9 +641,9 @@ export default function WhyChooseUs() {
           />
         </div>
 
-        {/* ======================================================
-            PULSING GOLDEN DOTS
-        ======================================================= */}
+        {/* ================================================================ */}
+        {/* GOLDEN DOTS                                                       */}
+        {/* ================================================================ */}
 
         <div
           aria-hidden="true"
@@ -644,7 +673,6 @@ export default function WhyChooseUs() {
               }}
               animate={{
                 opacity: reducedMotion ? 0.35 : [0.12, 0.75, 0.2, 0.95, 0.12],
-
                 scale: reducedMotion ? 1 : [0.65, 1.45, 0.75, 1.25, 0.65],
               }}
               transition={{
@@ -657,9 +685,9 @@ export default function WhyChooseUs() {
           ))}
         </div>
 
-        {/* ======================================================
-            SUBTLE GOLD PARTICLE TRAILS
-        ======================================================= */}
+        {/* ================================================================ */}
+        {/* PARTICLE TRAILS                                                   */}
+        {/* ================================================================ */}
 
         <motion.div
           aria-hidden="true"
@@ -678,7 +706,6 @@ export default function WhyChooseUs() {
           "
           animate={{
             opacity: reducedMotion ? 0.1 : [0.05, 0.35, 0.05],
-
             scaleX: reducedMotion ? 1 : [0.5, 1, 0.5],
           }}
           transition={{
@@ -705,7 +732,6 @@ export default function WhyChooseUs() {
           "
           animate={{
             opacity: reducedMotion ? 0.1 : [0.04, 0.3, 0.04],
-
             scaleX: reducedMotion ? 1 : [0.6, 1, 0.6],
           }}
           transition={{
@@ -716,9 +742,9 @@ export default function WhyChooseUs() {
           }}
         />
 
-        {/* ======================================================
-            TITLE
-        ======================================================= */}
+        {/* ================================================================ */}
+        {/* TITLE                                                              */}
+        {/* ================================================================ */}
 
         <motion.div
           className="
@@ -768,9 +794,9 @@ export default function WhyChooseUs() {
           </div>
         </motion.div>
 
-        {/* ======================================================
-            CARD STACK
-        ======================================================= */}
+        {/* ================================================================ */}
+        {/* CARD STACK                                                        */}
+        {/* ================================================================ */}
 
         <motion.div
           className="
@@ -791,16 +817,16 @@ export default function WhyChooseUs() {
               point={point}
               index={index}
               progress={smoothScrollProgress}
-              total={points.length}
               isMobile={isMobile}
+              isSmallScreen={isSmallScreen}
               reducedMotion={reducedMotion}
             />
           ))}
         </motion.div>
 
-        {/* ======================================================
-            PROGRESS BAR
-        ======================================================= */}
+        {/* ================================================================ */}
+        {/* PROGRESS BAR                                                      */}
+        {/* ================================================================ */}
 
         <motion.div
           className="
@@ -835,9 +861,9 @@ export default function WhyChooseUs() {
           />
         </motion.div>
 
-        {/* ======================================================
-            FINAL BLACK SCREEN
-        ======================================================= */}
+        {/* ================================================================ */}
+        {/* FINAL BLACK SCREEN                                                */}
+        {/* ================================================================ */}
 
         <motion.div
           className="

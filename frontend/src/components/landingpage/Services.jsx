@@ -67,10 +67,16 @@ function ServicesBackground() {
       return undefined;
     }
 
-    element.addEventListener("pointermove", handlePointerMove);
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
+
+    if (finePointer) {
+      element.addEventListener("pointermove", handlePointerMove);
+    }
 
     return () => {
-      element.removeEventListener("pointermove", handlePointerMove);
+      if (finePointer) {
+        element.removeEventListener("pointermove", handlePointerMove);
+      }
     };
   }, [cursorX, cursorY]);
 
@@ -545,6 +551,8 @@ function FeatureItem({ feature, featureProgress }) {
         text-[11px]
         leading-5
         text-[#39362f]
+        will-change-transform
+        transform-gpu
       "
     >
       <span
@@ -567,28 +575,97 @@ function FeatureItem({ feature, featureProgress }) {
 /* SERVICE FOLDER                                                             */
 /* -------------------------------------------------------------------------- */
 
-function ServiceFolder({ service, index, total, progress }) {
+function ServiceFolder({ service, index, total, progress, viewportWidth }) {
   const segmentStart = index / total;
   const segmentEnd = (index + 1) / total;
 
   const segmentLength = segmentEnd - segmentStart;
 
   const entranceEnd = segmentStart + segmentLength * 0.12;
-
   const pageStart = segmentStart + segmentLength * 0.18;
-
   const contentStart = segmentStart + segmentLength * 0.34;
-
   const contentEnd = segmentStart + segmentLength * 0.48;
-
   const holdStart = segmentStart + segmentLength * 0.48;
-
   const holdEnd = segmentStart + segmentLength * 0.82;
-
   const exitStart = segmentStart + segmentLength * 0.82;
 
   const enteringFrom = "115vw";
   const exitingTo = "-115vw";
+
+  const isPhone = viewportWidth < 640;
+  const isTablet = viewportWidth >= 640 && viewportWidth < 1024;
+  const isSmallScreen = isPhone || isTablet;
+
+  /*
+   * Keep the spring feel from the original animation, but make the
+   * response substantially faster on phone/tablet.
+   *
+   * Phone:
+   * - less mass
+   * - higher stiffness
+   * - enough damping to avoid visible bounce
+   *
+   * Tablet:
+   * - slightly more weight than phone
+   * - still considerably faster than desktop
+   *
+   * Desktop:
+   * - original smoother/heavier feel
+   */
+
+  const folderSpring = isPhone
+    ? {
+        stiffness: 150,
+        damping: 30,
+        mass: 0.52,
+      }
+    : isTablet
+      ? {
+          stiffness: 140,
+          damping: 29,
+          mass: 0.58,
+        }
+      : {
+          stiffness: 115,
+          damping: 28,
+          mass: 0.72,
+        };
+
+  const rotationSpring = isPhone
+    ? {
+        stiffness: 145,
+        damping: 31,
+        mass: 0.48,
+      }
+    : isTablet
+      ? {
+          stiffness: 135,
+          damping: 30,
+          mass: 0.52,
+        }
+      : {
+          stiffness: 110,
+          damping: 29,
+          mass: 0.68,
+        };
+
+  const pageSpring = isPhone
+    ? {
+        stiffness: 150,
+        damping: 31,
+        mass: 0.52,
+      }
+    : isTablet
+      ? {
+          stiffness: 140,
+          damping: 30,
+          mass: 0.58,
+        }
+      : {
+          stiffness: 110,
+          damping: 29,
+          mass: 0.72,
+        };
 
   /* ---------------------------------------------------------------------- */
   /* FOLDER POSITION                                                        */
@@ -600,11 +677,7 @@ function ServiceFolder({ service, index, total, progress }) {
     [enteringFrom, "0vw", "0vw", "0vw", "0vw", exitingTo],
   );
 
-  const folderX = useSpring(folderXRaw, {
-    stiffness: 95,
-    damping: 24,
-    mass: 0.9,
-  });
+  const folderX = useSpring(folderXRaw, folderSpring);
 
   const folderRotateRaw = useTransform(
     progress,
@@ -612,11 +685,7 @@ function ServiceFolder({ service, index, total, progress }) {
     [3, 0, 0, 0, -3],
   );
 
-  const folderRotate = useSpring(folderRotateRaw, {
-    stiffness: 90,
-    damping: 25,
-    mass: 0.8,
-  });
+  const folderRotate = useSpring(folderRotateRaw, rotationSpring);
 
   /* ---------------------------------------------------------------------- */
   /* PAGE                                                                    */
@@ -628,11 +697,7 @@ function ServiceFolder({ service, index, total, progress }) {
     ["70%", "30%", "0%", "0%", "0%", "70%"],
   );
 
-  const pageY = useSpring(pageYRaw, {
-    stiffness: 85,
-    damping: 26,
-    mass: 0.9,
-  });
+  const pageY = useSpring(pageYRaw, pageSpring);
 
   const pageScaleRaw = useTransform(
     progress,
@@ -640,11 +705,7 @@ function ServiceFolder({ service, index, total, progress }) {
     [0.88, 0.96, 1, 1, 1, 0.88],
   );
 
-  const pageScale = useSpring(pageScaleRaw, {
-    stiffness: 85,
-    damping: 26,
-    mass: 0.9,
-  });
+  const pageScale = useSpring(pageScaleRaw, pageSpring);
 
   const pageRotateRaw = useTransform(
     progress,
@@ -652,11 +713,7 @@ function ServiceFolder({ service, index, total, progress }) {
     [3, 1, 0, 0, 0, -2.5],
   );
 
-  const pageRotate = useSpring(pageRotateRaw, {
-    stiffness: 80,
-    damping: 25,
-    mass: 0.85,
-  });
+  const pageRotate = useSpring(pageRotateRaw, rotationSpring);
 
   /* ---------------------------------------------------------------------- */
   /* CONTENT                                                                 */
@@ -691,6 +748,8 @@ function ServiceFolder({ service, index, total, progress }) {
         -translate-y-1/2
         sm:h-[760px]
         lg:h-[820px]
+        will-change-transform
+        transform-gpu
       "
     >
       {/* FOLDER */}
@@ -837,6 +896,8 @@ function ServiceFolder({ service, index, total, progress }) {
           shadow-[0_40px_100px_rgba(35,28,18,0.22)]
           sm:w-[80%]
           lg:w-[72%]
+          will-change-transform
+          transform-gpu
         "
       >
         <div
@@ -879,6 +940,8 @@ function ServiceFolder({ service, index, total, progress }) {
             sm:pt-16
             lg:px-16
             lg:pt-18
+            will-change-transform
+            transform-gpu
           "
         >
           <div className="flex items-start justify-between">
@@ -917,8 +980,6 @@ function ServiceFolder({ service, index, total, progress }) {
               {String(index + 1).padStart(2, "0")}
             </span>
           </div>
-
-          {/* Static logo — no pop-out animation */}
 
           <div
             className="
@@ -1101,28 +1162,32 @@ function ServiceFolder({ service, index, total, progress }) {
 function ServicesTrack({ services }) {
   const trackRef = useRef(null);
 
+  const [viewportWidth, setViewportWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1280,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: trackRef,
     offset: ["start start", "end end"],
   });
 
-  /*
-   * The service cards finish their animation
-   * before the black transition begins.
-   */
-
   const serviceProgress = useTransform(scrollYProgress, [0, 0.86], [0, 1]);
-
-  /*
-   * Smooth black transition.
-   *
-   * It starts before the very end, giving the
-   * final card enough time to disappear naturally
-   * beneath the darkening layer.
-   *
-   * The final portion stays black so the next
-   * section does not flash through.
-   */
 
   const endBlackOpacity = useTransform(
     scrollYProgress,
@@ -1130,12 +1195,18 @@ function ServicesTrack({ services }) {
     [0, 0.08, 0.28, 0.68, 1],
   );
 
+  const scrollHeightPerService =
+    viewportWidth < 640 ? 190 : viewportWidth < 1024 ? 225 : 300;
+
   return (
     <div
       ref={trackRef}
       className="relative"
       style={{
-        minHeight: `${Math.max(320, services.length * 300)}vh`,
+        minHeight: `${Math.max(
+          320,
+          services.length * scrollHeightPerService,
+        )}vh`,
       }}
     >
       <div
@@ -1150,8 +1221,6 @@ function ServicesTrack({ services }) {
         "
       >
         <ServicesBackground />
-
-        {/* Top labels */}
 
         <div
           className="
@@ -1194,8 +1263,6 @@ function ServicesTrack({ services }) {
           </span>
         </div>
 
-        {/* Service stage */}
-
         <div
           className="
             relative
@@ -1211,13 +1278,10 @@ function ServicesTrack({ services }) {
               index={index}
               total={services.length}
               progress={serviceProgress}
+              viewportWidth={viewportWidth}
             />
           ))}
         </div>
-
-        {/* ================================================================
-            SMOOTH BLACK END TRANSITION
-        ================================================================= */}
 
         <motion.div
           aria-hidden="true"
@@ -1233,8 +1297,6 @@ function ServicesTrack({ services }) {
             will-change-[opacity]
           "
         />
-
-        {/* Bottom labels */}
 
         <div
           className="
@@ -1337,8 +1399,6 @@ export default function Services() {
         text-[#171814]
       "
     >
-      {/* HEADING */}
-
       <div
         className="
           relative
@@ -1357,11 +1417,7 @@ export default function Services() {
         <HeadingReveal />
       </div>
 
-      {/* SERVICES */}
-
       <ServicesTrack services={displayServices} />
-
-      {/* FINAL BLACK AREA */}
 
       <div
         className="

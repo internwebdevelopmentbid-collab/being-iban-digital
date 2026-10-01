@@ -8,6 +8,7 @@ const useIsMobile = () => {
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 639px)");
+
     const update = () => setIsMobile(media.matches);
 
     update();
@@ -28,49 +29,53 @@ const ParentCompany = () => {
     offset: ["start start", "end end"],
   });
 
+  /*
+   * ============================================================
+   * SMOOTH CARD MOTION
+   * ============================================================
+   *
+   * The card has a longer, softer travel path.
+   * Only the Y movement uses a spring so the card feels physical
+   * without making opacity and scale lag behind.
+   */
+
   const cardY = useTransform(
     scrollYProgress,
-    [0, 0.1, 0.24, 0.7, 0.88, 1],
+    [0, 0.08, 0.2, 0.34, 0.66, 0.8, 0.92, 1],
     isMobile
-      ? ["90vh", "58vh", "0vh", "0vh", "-58vh", "-90vh"]
-      : ["105vh", "72vh", "0vh", "0vh", "-72vh", "-105vh"],
+      ? ["72vh", "52vh", "12vh", "0vh", "0vh", "-12vh", "-52vh", "-72vh"]
+      : ["82vh", "58vh", "14vh", "0vh", "0vh", "-14vh", "-58vh", "-82vh"],
   );
 
   const cardOpacity = useTransform(
     scrollYProgress,
-    [0, 0.08, 0.18, 0.78, 0.92, 1],
-    [0, 0.45, 1, 1, 0.45, 0],
+    [0, 0.08, 0.18, 0.28, 0.72, 0.82, 0.92, 1],
+    [0, 0.25, 0.7, 1, 1, 0.7, 0.25, 0],
   );
 
-  const cardScaleRaw = useTransform(
+  const cardScale = useTransform(
     scrollYProgress,
-    [0, 0.16, 0.28, 0.72, 0.84, 1],
-    [0.96, 0.985, 1, 1, 0.985, 0.96],
+    [0, 0.15, 0.28, 0.72, 0.85, 1],
+    [0.975, 0.99, 1, 1, 0.99, 0.975],
   );
 
   /*
-   * Smooth the scroll-linked card motion.
+   * Smooth physical movement.
    *
-   * The original scroll ranges remain unchanged.
-   * Springs simply remove the mechanical/jittery feeling
-   * when the user scrolls quickly or stops abruptly.
+   * Lower stiffness:
+   * smoother acceleration
+   *
+   * Higher damping:
+   * prevents bounce/jitter
+   *
+   * Higher mass:
+   * adds subtle inertia
    */
+
   const smoothCardY = useSpring(cardY, {
-    stiffness: 85,
-    damping: 24,
-    mass: 0.7,
-  });
-
-  const smoothCardOpacity = useSpring(cardOpacity, {
-    stiffness: 90,
-    damping: 25,
-    mass: 0.6,
-  });
-
-  const smoothCardScale = useSpring(cardScaleRaw, {
-    stiffness: 85,
-    damping: 24,
-    mass: 0.7,
+    stiffness: 55,
+    damping: 30,
+    mass: 1.1,
   });
 
   const handleVisit = () => {
@@ -88,17 +93,14 @@ const ParentCompany = () => {
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden px-3 py-6 sm:px-8 sm:py-28 lg:px-12 lg:py-36 xl:px-16">
         {/* =====================================================
-          BACKGROUND RED GLOWING DOTS
-          THESE STAY OUTSIDE THE CARD
-          ===================================================== */}
+            BACKGROUND RED GLOWING DOTS
+            ===================================================== */}
 
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
         >
-          {/* =================================================
-            LARGE SOFT RED GLOWS
-            ================================================= */}
+          {/* LARGE SOFT RED GLOWS */}
 
           <motion.span
             animate={{
@@ -155,9 +157,7 @@ const ParentCompany = () => {
             className="absolute bottom-[15%] right-[10%] h-20 w-20 rounded-full bg-[#FF0000]/20 blur-3xl"
           />
 
-          {/* =================================================
-            TOP / LEFT DOTS
-            ================================================= */}
+          {/* TOP / LEFT DOTS */}
 
           <motion.span
             animate={{
@@ -242,9 +242,7 @@ const ParentCompany = () => {
             className="absolute left-[25%] top-[82%] h-1 w-1 rounded-full bg-[#FF0000] shadow-[0_0_10px_rgba(255,0,0,0.8)]"
           />
 
-          {/* =================================================
-            RIGHT DOTS
-            ================================================= */}
+          {/* RIGHT DOTS */}
 
           <motion.span
             animate={{
@@ -330,9 +328,7 @@ const ParentCompany = () => {
             className="absolute right-[25%] top-[88%] h-1 w-1 rounded-full bg-[#FF0000] shadow-[0_0_10px_rgba(255,0,0,0.8)]"
           />
 
-          {/* =================================================
-            TOP CENTER DOTS
-            ================================================= */}
+          {/* TOP CENTER DOTS */}
 
           <motion.span
             animate={{
@@ -390,9 +386,7 @@ const ParentCompany = () => {
             className="absolute right-[28%] top-[12%] h-1 w-1 rounded-full bg-[#FF0000] shadow-[0_0_10px_rgba(255,0,0,0.8)]"
           />
 
-          {/* =================================================
-            BOTTOM DOTS
-            ================================================= */}
+          {/* BOTTOM DOTS */}
 
           <motion.span
             animate={{
@@ -452,25 +446,25 @@ const ParentCompany = () => {
         </div>
 
         {/* =====================================================
-          MAIN CONTENT
-          ===================================================== */}
+            MAIN CONTENT
+            ===================================================== */}
 
-        <div className="relative z-10 mx-auto max-w-[1400px]">
+        <div className="relative z-10 mx-auto w-full max-w-[1400px]">
           {/* ===================================================
-            MAIN CARD
-            =================================================== */}
+              MAIN CARD
+              =================================================== */}
 
           <motion.div
             style={{
               y: smoothCardY,
-              opacity: smoothCardOpacity,
-              scale: smoothCardScale,
+              opacity: cardOpacity,
+              scale: cardScale,
             }}
-            className="relative w-full overflow-hidden rounded-[22px] border border-[#302E28] bg-[#10110F] shadow-[0_25px_70px_rgba(0,0,0,0.35)] sm:rounded-[30px] lg:rounded-[38px]"
+            className="relative w-full overflow-hidden rounded-[22px] border border-[#302E28] bg-[#10110F] shadow-[0_25px_70px_rgba(0,0,0,0.35)] will-change-transform sm:rounded-[30px] lg:rounded-[38px]"
           >
             {/* =================================================
-              SUBTLE INTERNAL RED ACCENT
-              ================================================= */}
+                SUBTLE INTERNAL RED ACCENT
+                ================================================= */}
 
             <motion.div
               aria-hidden="true"
@@ -484,7 +478,7 @@ const ParentCompany = () => {
               }}
               viewport={{
                 once: true,
-                amount: 0.2,
+                amount: 0.25,
               }}
               transition={{
                 opacity: {
@@ -501,13 +495,13 @@ const ParentCompany = () => {
             />
 
             {/* =================================================
-              CONTENT GRID
-              ================================================= */}
+                CONTENT GRID
+                ================================================= */}
 
             <div className="grid lg:grid-cols-[0.72fr_1.28fr]">
               {/* =================================================
-                LOGO PANEL
-                ================================================= */}
+                  LOGO PANEL
+                  ================================================= */}
 
               <div className="relative flex min-h-[235px] items-center justify-center overflow-hidden border-b border-[#292722] p-5 sm:min-h-[390px] sm:p-14 lg:min-h-[540px] lg:border-b-0 lg:border-r lg:p-16">
                 {/* Red logo rings */}
@@ -523,7 +517,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 1.45,
@@ -545,7 +539,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 1.45,
@@ -570,7 +564,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     opacity: {
@@ -593,9 +587,7 @@ const ParentCompany = () => {
                   className="absolute left-1/2 top-[calc(50%-105px)] h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#FF0000] sm:top-[calc(50%-195px)]"
                 />
 
-                {/* =================================================
-                  LARGE LOGO CONTAINER
-                  ================================================= */}
+                {/* Large logo container */}
 
                 <motion.div
                   initial={{
@@ -614,14 +606,14 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 1.3,
                     delay: 0.3,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="relative z-10 flex h-[125px] w-[125px] cursor-pointer items-center justify-center rounded-full bg-black p-4 shadow-[0_20px_60px_rgba(0,0,0,0.35)] sm:h-[220px] sm:w-[220px] sm:p-8"
+                  className="relative z-10 flex h-[125px] w-[125px] cursor-pointer items-center justify-center rounded-full bg-black p-4 shadow-[0_20px_60px_rgba(0,0,0,0.35)] will-change-transform sm:h-[220px] sm:w-[220px] sm:p-8"
                 >
                   <img
                     src={bieLogo}
@@ -643,7 +635,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 0.7,
@@ -666,7 +658,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 0.7,
@@ -680,8 +672,8 @@ const ParentCompany = () => {
               </div>
 
               {/* =================================================
-                CONTENT
-                ================================================= */}
+                  CONTENT
+                  ================================================= */}
 
               <div className="flex flex-col justify-center p-5 sm:p-12 lg:p-16 xl:p-20">
                 {/* Eyebrow */}
@@ -697,7 +689,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 0.8,
@@ -726,7 +718,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 1,
@@ -755,7 +747,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 0.8,
@@ -788,7 +780,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 0.8,
@@ -811,7 +803,7 @@ const ParentCompany = () => {
                   }}
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.25,
                   }}
                   transition={{
                     duration: 0.8,

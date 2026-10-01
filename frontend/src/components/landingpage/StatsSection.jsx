@@ -34,14 +34,24 @@ const NUMBER_FOCAL_Y = 50;
 
 /*
  * =========================================
- * SMOOTH SCROLL CONFIGURATION
+ * CONSISTENT SCROLL SPRING
  * =========================================
+ *
+ * Keep this identical across devices.
+ *
+ * The previous responsive spring approach made
+ * the same physical scroll gesture feel different
+ * on phone/tablet/desktop.
+ *
+ * This spring is intentionally quick enough to
+ * follow touch scrolling while still preserving
+ * the smooth weighted motion.
  */
-
 const SCROLL_SPRING = {
-  stiffness: 100,
-  damping: 30,
-  mass: 0.35,
+  stiffness: 180,
+  damping: 36,
+  mass: 0.2,
+  restDelta: 0.001,
 };
 
 /*
@@ -115,6 +125,12 @@ const StatsSection = () => {
    * =========================================
    * SMOOTH SCROLL PROGRESS
    * =========================================
+   *
+   * Everything that reacts to scrolling should
+   * use this same motion value.
+   *
+   * This prevents the active statistic from
+   * getting ahead of the actual visual animation.
    */
 
   const smoothScrollProgress = useSpring(scrollYProgress, SCROLL_SPRING);
@@ -179,15 +195,21 @@ const StatsSection = () => {
    * STAT SEQUENCE
    * =========================================
    *
-   * The raw scroll position decides which
-   * statistic is active.
+   * IMPORTANT:
    *
-   * The actual visual transition is handled
-   * separately below so the previous number
-   * can finish its exit gracefully.
+   * Use smoothScrollProgress instead of the raw
+   * scrollYProgress here.
+   *
+   * Previously the active stat reacted to the
+   * raw scroll position while the actual content
+   * reacted to the spring-smoothed position.
+   *
+   * That mismatch caused the sequence to feel
+   * inconsistent, especially during quick
+   * touch swipes.
    */
 
-  useMotionValueEvent(scrollYProgress, "change", (progress) => {
+  useMotionValueEvent(smoothScrollProgress, "change", (progress) => {
     if (!stats.length) {
       return;
     }
@@ -238,7 +260,7 @@ const StatsSection = () => {
   const contentY = useTransform(
     smoothScrollProgress,
     [CONTENT_START, CONTENT_END],
-    [190, 0],
+    [80, 0],
   );
 
   const contentScale = useTransform(
@@ -297,7 +319,6 @@ const StatsSection = () => {
     const safeScale = Math.max(Number(scale) || 1, 1);
 
     const width = 100 / safeScale;
-
     const height = 100 / safeScale;
 
     return `${NUMBER_FOCAL_X - width / 2} ${
@@ -348,8 +369,10 @@ const StatsSection = () => {
       ref={sectionRef}
       className="
         relative
-        min-h-[800vh]
+        min-h-[520vh]
         w-full
+        sm:min-h-[650vh]
+        lg:min-h-[800vh]
         bg-[#080907]
       "
     >
@@ -361,9 +384,11 @@ const StatsSection = () => {
         className="
           sticky
           top-0
-          h-[100dvh]
-          min-h-[620px]
+          h-[100svh]
+          min-h-0
           w-full
+          sm:h-[100dvh]
+          sm:min-h-[620px]
           overflow-hidden
           bg-[#080907]
         "
@@ -523,6 +548,7 @@ const StatsSection = () => {
             inset-0
             z-[60]
             bg-white
+            will-change-[opacity]
           "
           style={{
             opacity: whiteCameraOpacity,
@@ -594,6 +620,8 @@ const StatsSection = () => {
             items-center
             justify-center
             text-center
+            will-change-transform
+            transform-gpu
           "
         >
           {/* ===================================
@@ -654,7 +682,8 @@ const StatsSection = () => {
             <div
               className="
                 flex
-                h-[100dvh]
+                h-full
+                min-h-0
                 w-full
                 items-center
                 justify-center
@@ -672,7 +701,8 @@ const StatsSection = () => {
             <div
               className="
                 relative
-                h-[100dvh]
+                h-full
+                min-h-0
                 w-full
                 overflow-hidden
               "
@@ -701,15 +731,15 @@ const StatsSection = () => {
                       }}
                       transition={{
                         opacity: {
-                          duration: 1.25,
+                          duration: 0.7,
                           ease: [0.16, 1, 0.3, 1],
                         },
                         y: {
-                          duration: 1.4,
+                          duration: 0.85,
                           ease: [0.16, 1, 0.3, 1],
                         },
                         scale: {
-                          duration: 1.4,
+                          duration: 0.85,
                           ease: [0.16, 1, 0.3, 1],
                         },
                       }}
@@ -722,11 +752,12 @@ const StatsSection = () => {
                         flex-col
                         items-center
                         justify-center
+                        will-change-transform
+                        transform-gpu
                       "
                       style={{
                         visibility: isActive ? "visible" : "hidden",
                         pointerEvents: isActive ? "auto" : "none",
-                        willChange: "transform, opacity",
                       }}
                     >
                       {/* =========================
@@ -765,10 +796,14 @@ const StatsSection = () => {
                               pointer-events-none
                               relative
                               z-50
-                              h-[clamp(220px,52vh,520px)]
-                              w-[clamp(240px,42vw,560px)]
+                              h-[clamp(130px,32vh,400px)]
+                              w-[clamp(150px,58vw,430px)]
+                              sm:h-[clamp(170px,40vh,420px)]
+                              sm:w-[clamp(190px,34vw,430px)]
                               overflow-visible
                               isolate
+                              will-change-transform
+                              transform-gpu
                             "
                             style={
                               isActive
@@ -798,8 +833,8 @@ const StatsSection = () => {
                                 textAnchor="middle"
                                 dominantBaseline="central"
                                 fill="#F5F3EE"
-                                fontFamily='"Google Sans Flex", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-                                fontSize="52"
+                                fontFamily='\"Google Sans Flex\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif'
+                                fontSize="46"
                                 fontWeight="500"
                                 letterSpacing="-2"
                                 style={{
@@ -835,12 +870,14 @@ const StatsSection = () => {
                                 z-20
                                 ml-2
                                 font-display
-                                text-[clamp(48px,8vw,105px)]
+                                text-[clamp(30px,9vw,75px)]
                                 font-medium
                                 leading-none
                                 tracking-[-0.06em]
                                 text-[#C9A66B]
                                 sm:ml-5
+                                will-change-transform
+                                transform-gpu
                               "
                             >
                               {stat.suffix}
@@ -884,7 +921,8 @@ const StatsSection = () => {
             <div
               className="
                 flex
-                h-[100dvh]
+                h-full
+                min-h-0
                 items-center
                 justify-center
               "

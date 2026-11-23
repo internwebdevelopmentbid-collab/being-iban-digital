@@ -1,25 +1,101 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
+
 import { motion } from "framer-motion";
 
 import GoldButton from "./GoldButton";
+
 import api_url from "../../config/api";
+
+const WORKS_CTA_ENDPOINT = `${api_url}/api/media/works-cta`;
+
+const COMPOSITIONS = [
+  {
+    container: "left-[-4%] top-[18%] h-[250px] w-[360px] rotate-[-7deg]",
+    image: "object-[center_center]",
+    wash: "bg-[linear-gradient(135deg,rgba(201,166,107,0.14),transparent_48%,rgba(8,9,7,0.12))]",
+  },
+  {
+    container: "right-[-5%] top-[12%] h-[300px] w-[430px] rotate-[6deg]",
+    image: "object-[center_center]",
+    wash: "bg-[linear-gradient(135deg,rgba(91,125,145,0.13),transparent_48%,rgba(201,166,107,0.10))]",
+  },
+  {
+    container: "bottom-[-8%] left-[18%] h-[210px] w-[330px] rotate-[3deg]",
+    image: "object-[center_center]",
+    wash: "bg-[linear-gradient(135deg,rgba(150,104,72,0.14),transparent_50%,rgba(201,166,107,0.08))]",
+  },
+];
+
+const getProjectImage = (project) => {
+  if (project?.category !== "image" || project?.showInCTA !== true) {
+    return "";
+  }
+
+  return project.mediaUrl || "";
+};
+
+const optimizeCloudinaryUrl = (url, width = 900) => {
+  if (typeof url !== "string" || !url) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (
+      !parsed.hostname.includes("cloudinary.com") ||
+      !parsed.pathname.includes("/image/upload/")
+    ) {
+      return url;
+    }
+
+    const marker = "/image/upload/";
+    const uploadIndex = parsed.pathname.indexOf(marker);
+    const prefixEnd = uploadIndex + marker.length;
+    const remainder = parsed.pathname.slice(prefixEnd);
+
+    const firstSegmentEnd = remainder.indexOf("/");
+
+    const firstSegment =
+      firstSegmentEnd === -1 ? remainder : remainder.slice(0, firstSegmentEnd);
+
+    // Keep existing Cloudinary transformations untouched.
+    const looksLikeTransformation =
+      /^(?:f_|q_|w_|h_|c_|dpr_|g_|ar_|e_|b_|bo_|r_|t_|fl_|dl_|pg_|x_|y_|z_|so_|fps_|vc_)/.test(
+        firstSegment,
+      ) || firstSegment.includes(",");
+
+    if (looksLikeTransformation) {
+      return url;
+    }
+
+    parsed.pathname =
+      parsed.pathname.slice(0, prefixEnd) +
+      `f_auto,q_auto,w_${width},c_limit/` +
+      remainder;
+
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+};
 
 const WorksCTA = () => {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
 
-  /*
-  |--------------------------------------------------------------------------
-  | Fetch curated Works CTA projects
-  |--------------------------------------------------------------------------
-  */
+  /* --------------------------------------------------------------------------
+     Fetch curated Works CTA projects
+     -------------------------------------------------------------------------- */
 
   useEffect(() => {
-    let mounted = true;
+    const controller = new AbortController();
 
     const fetchWorksCTA = async () => {
       try {
-        const response = await fetch(`${api_url}/api/media/works-cta`);
+        const response = await fetch(WORKS_CTA_ENDPOINT, {
+          signal: controller.signal,
+        });
 
         const data = await response.json();
 
@@ -27,28 +103,25 @@ const WorksCTA = () => {
           throw new Error(data.message || "Unable to fetch Works CTA media.");
         }
 
-        if (mounted) {
-          const ctaImages = Array.isArray(data.media)
-            ? data.media
-                .filter(
-                  (item) =>
-                    item.category === "image" &&
-                    item.showInCTA === true &&
-                    item.mediaUrl,
-                )
-                .slice(0, 3)
-            : [];
+        const ctaImages = Array.isArray(data.media)
+          ? data.media
+              .filter(
+                (item) =>
+                  item?.category === "image" &&
+                  item?.showInCTA === true &&
+                  item?.mediaUrl,
+              )
+              .slice(0, 3)
+          : [];
 
-          setProjects(ctaImages);
-        }
+        setProjects(ctaImages);
       } catch (error) {
-        console.error("Works CTA media error:", error);
-
-        if (mounted) {
+        if (error?.name !== "AbortError") {
+          console.error("Works CTA media error:", error);
           setProjects([]);
         }
       } finally {
-        if (mounted) {
+        if (!controller.signal.aborted) {
           setLoadingProjects(false);
         }
       }
@@ -56,30 +129,12 @@ const WorksCTA = () => {
 
     fetchWorksCTA();
 
-    return () => {
-      mounted = false;
-    };
+    return () => controller.abort();
   }, []);
 
-  /*
-  |--------------------------------------------------------------------------
-  | Resolve visual asset
-  |--------------------------------------------------------------------------
-  */
-
-  const getProjectImage = (project) => {
-    if (project?.category !== "image" || project?.showInCTA !== true) {
-      return "";
-    }
-
-    return project?.mediaUrl || "";
-  };
-
-  /*
-  |--------------------------------------------------------------------------
-  | Render
-  |--------------------------------------------------------------------------
-  */
+  /* --------------------------------------------------------------------------
+     Render
+     -------------------------------------------------------------------------- */
 
   return (
     <section
@@ -130,13 +185,10 @@ const WorksCTA = () => {
           border
           border-[#C9A66B]/70
           bg-[#171716]
-
           shadow-[0_0_0_rgba(201,166,107,0)]
-
           transition-[box-shadow,border-color]
           duration-700
           ease-[cubic-bezier(0.22,1,0.36,1)]
-
           hover:border-[#C9A66B]
           hover:shadow-[0_0_80px_rgba(201,166,107,0.12),0_0_180px_rgba(201,166,107,0.06)]
 
@@ -151,7 +203,7 @@ const WorksCTA = () => {
       >
         {/* ==================================================
             PULSING MESH
-        ================================================== */}
+            ================================================== */}
 
         <div
           aria-hidden="true"
@@ -176,9 +228,7 @@ const WorksCTA = () => {
               -translate-x-1/2
               -translate-y-1/2
               rounded-full
-
               bg-[radial-gradient(ellipse,rgba(201,166,107,0.075)_0%,rgba(201,166,107,0.035)_30%,transparent_68%)]
-
               blur-[45px]
             "
             animate={{
@@ -206,9 +256,7 @@ const WorksCTA = () => {
               -translate-x-1/2
               -translate-y-1/2
               rounded-full
-
               bg-[radial-gradient(ellipse,rgba(225,212,185,0.055)_0%,rgba(201,166,107,0.025)_35%,transparent_70%)]
-
               blur-[55px]
             "
             animate={{
@@ -235,10 +283,8 @@ const WorksCTA = () => {
               -translate-x-1/2
               -translate-y-1/2
               opacity-[0.055]
-
               bg-[linear-gradient(rgba(201,166,107,0.7)_1px,transparent_1px),linear-gradient(90deg,rgba(201,166,107,0.7)_1px,transparent_1px)]
               bg-[size:48px_48px]
-
               [mask-image:radial-gradient(ellipse_at_center,black_0%,transparent_68%)]
               [-webkit-mask-image:radial-gradient(ellipse_at_center,black_0%,transparent_68%)]
             "
@@ -256,7 +302,7 @@ const WorksCTA = () => {
 
         {/* ==================================================
             PROJECT FRAGMENTS
-        ================================================== */}
+            ================================================== */}
 
         <div
           aria-hidden={projects.length === 0}
@@ -273,13 +319,14 @@ const WorksCTA = () => {
             projects.map((project, index) => {
               const image = getProjectImage(project);
 
-              if (!image) {
-                return null;
-              }
+              if (!image) return null;
 
               return (
                 <CTAProject
-                  key={project._id || `${project.projectTitle}-${index}`}
+                  key={
+                    project._id ||
+                    `${project.projectTitle || project.title || "work"}-${index}`
+                  }
                   project={project}
                   image={image}
                   index={index}
@@ -290,7 +337,7 @@ const WorksCTA = () => {
 
         {/* ==================================================
             PROJECT AMBIENT GLOW
-        ================================================== */}
+            ================================================== */}
 
         <div
           aria-hidden="true"
@@ -300,159 +347,14 @@ const WorksCTA = () => {
             inset-0
             z-[4]
             rounded-[inherit]
-
             bg-[radial-gradient(circle_at_72%_50%,rgba(201,166,107,0.045),transparent_32%),radial-gradient(circle_at_20%_72%,rgba(225,212,185,0.025),transparent_28%)]
-
             opacity-70
           "
         />
 
         {/* ==================================================
-            ACCENT ORBITS
-        ================================================== */}
-
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            right-[12%]
-            top-1/2
-            z-[5]
-            h-[300px]
-            w-[300px]
-            -translate-y-1/2
-
-            max-[1024px]:
-              right-[6%]
-              opacity-70
-
-            max-[768px]:
-              right-1/2
-              top-[68%]
-              h-[230px]
-              w-[230px]
-              translate-x-1/2
-              opacity-40
-
-            max-[550px]:
-              h-[180px]
-              w-[180px]
-          "
-        >
-          {/* Outer orbit */}
-
-          <motion.div
-            className="
-              absolute
-              inset-0
-              rounded-full
-              border
-              border-[#C9A66B]/10
-            "
-            animate={{
-              rotate: 360,
-              scale: [1, 1.04, 1],
-            }}
-            transition={{
-              rotate: {
-                duration: 22,
-                repeat: Infinity,
-                ease: "linear",
-              },
-              scale: {
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              },
-            }}
-          />
-
-          {/* Middle orbit */}
-
-          <motion.div
-            className="
-              absolute
-              inset-[38px]
-              rounded-full
-              border
-              border-[#C9A66B]/15
-            "
-            animate={{
-              rotate: -360,
-              scale: [1, 0.94, 1],
-            }}
-            transition={{
-              rotate: {
-                duration: 16,
-                repeat: Infinity,
-                ease: "linear",
-              },
-              scale: {
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-              },
-            }}
-          />
-
-          {/* Center */}
-
-          <motion.div
-            className="
-              absolute
-              left-1/2
-              top-1/2
-              h-[8px]
-              w-[8px]
-              -translate-x-1/2
-              -translate-y-1/2
-              rounded-full
-              bg-[#C9A66B]
-              shadow-[0_0_20px_rgba(201,166,107,0.5)]
-            "
-            animate={{
-              scale: [0.8, 1.4, 0.8],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: 2.8,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-
-          {/* Orbit accent */}
-
-          <motion.div
-            className="
-              absolute
-              left-1/2
-              top-0
-              h-[5px]
-              w-[5px]
-              -translate-x-1/2
-              rounded-full
-              bg-[#E1D4B9]
-              shadow-[0_0_12px_rgba(225,212,185,0.5)]
-            "
-            animate={{
-              rotate: 360,
-            }}
-            style={{
-              transformOrigin: "0 150px",
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        </div>
-
-        {/* ==================================================
             SMALL ACCENT LINES
-        ================================================== */}
+            ================================================== */}
 
         <div
           aria-hidden="true"
@@ -508,7 +410,7 @@ const WorksCTA = () => {
 
         {/* ==================================================
             HOVER INTERNAL GLOW
-        ================================================== */}
+            ================================================== */}
 
         <div
           aria-hidden="true"
@@ -519,19 +421,16 @@ const WorksCTA = () => {
             z-[7]
             rounded-[inherit]
             opacity-0
-
             bg-[radial-gradient(circle_at_50%_50%,rgba(201,166,107,0.08),transparent_55%)]
-
             transition-opacity
             duration-700
-
             group-hover:opacity-100
           "
         />
 
         {/* ==================================================
             INNER BORDER
-        ================================================== */}
+            ================================================== */}
 
         <div
           aria-hidden="true"
@@ -548,7 +447,7 @@ const WorksCTA = () => {
 
         {/* ==================================================
             TOP META
-        ================================================== */}
+            ================================================== */}
 
         <div
           className="
@@ -584,7 +483,7 @@ const WorksCTA = () => {
 
         {/* ==================================================
             CENTER CONTENT
-        ================================================== */}
+            ================================================== */}
 
         <div
           className="
@@ -756,7 +655,7 @@ const WorksCTA = () => {
 
         {/* ==================================================
             BOTTOM META
-        ================================================== */}
+            ================================================== */}
 
         <div
           className="
@@ -799,38 +698,10 @@ const WorksCTA = () => {
    CTA PROJECT
 ========================================================== */
 
-const CTAProject = ({ project, image, index }) => {
+const CTAProject = memo(({ project, image, index }) => {
   const projectName = project.projectTitle || project.title || "Selected Work";
 
-  const category = project.category || "Digital Experience";
-
-  /*
-  |--------------------------------------------------------------------------
-  | Different compositions for each project
-  |--------------------------------------------------------------------------
-  */
-
-  const compositions = [
-    {
-      container: "left-[-4%] top-[18%] h-[250px] w-[360px] rotate-[-7deg]",
-      image: "object-[center_center]",
-      wash: "bg-[linear-gradient(135deg,rgba(201,166,107,0.14),transparent_48%,rgba(8,9,7,0.12))]",
-    },
-
-    {
-      container: "right-[-5%] top-[12%] h-[300px] w-[430px] rotate-[6deg]",
-      image: "object-[center_center]",
-      wash: "bg-[linear-gradient(135deg,rgba(91,125,145,0.13),transparent_48%,rgba(201,166,107,0.10))]",
-    },
-
-    {
-      container: "bottom-[-8%] left-[18%] h-[210px] w-[330px] rotate-[3deg]",
-      image: "object-[center_center]",
-      wash: "bg-[linear-gradient(135deg,rgba(150,104,72,0.14),transparent_50%,rgba(201,166,107,0.08))]",
-    },
-  ];
-
-  const composition = compositions[index] || compositions[0];
+  const composition = COMPOSITIONS[index] || COMPOSITIONS[0];
 
   const hasProjectUrl =
     typeof project.projectUrl === "string" &&
@@ -906,9 +777,11 @@ const CTAProject = ({ project, image, index }) => {
         "
       >
         <img
-          src={image}
+          src={optimizeCloudinaryUrl(image)}
           alt={project.altText || projectName}
           loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           className={`
             h-full
             w-full
@@ -968,16 +841,11 @@ const CTAProject = ({ project, image, index }) => {
             h-[70%]
             w-[55%]
             rounded-full
-
             bg-[#C9A66B]/[0.07]
-
             blur-[45px]
-
             opacity-50
-
             transition-opacity
             duration-1000
-
             group-hover/project:opacity-100
           "
         />
@@ -988,17 +856,13 @@ const CTAProject = ({ project, image, index }) => {
             pointer-events-none
             absolute
             inset-0
-
             bg-gradient-to-t
             from-[#080907]/35
             via-[#080907]/05
             to-transparent
-
             opacity-70
-
             transition-opacity
             duration-1000
-
             group-hover/project:opacity-35
           "
         />
@@ -1009,21 +873,17 @@ const CTAProject = ({ project, image, index }) => {
             pointer-events-none
             absolute
             inset-[2px]
-
             border
             border-white/[0.07]
-
             opacity-60
-
             transition-all
             duration-700
-
             group-hover/project:border-[#C9A66B]/20
           "
         />
       </motion.div>
     </Wrapper>
   );
-};
+});
 
 export default WorksCTA;

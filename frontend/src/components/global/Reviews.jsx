@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { motion, AnimatePresence } from "framer-motion";
+
 import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
+
 import toast from "react-hot-toast";
+
 import api_url from "../../config/api";
+
 import GoldButton from "./GoldButton";
 
 /* =========================================================
@@ -10,6 +15,7 @@ import GoldButton from "./GoldButton";
    ========================================================= */
 
 const AUTO_SLIDE_INTERVAL = 5000;
+
 const MAX_LOGO_SIZE = 5 * 1024 * 1024;
 
 const API_BASE = String(api_url || "").replace(/\/+$/, "");
@@ -20,27 +26,6 @@ const EMPTY_FORM = {
   rating: 5,
   review: "",
 };
-
-/* =========================================================
-   GOLDEN DOT ACCENTS
-   ========================================================= */
-
-const GOLDEN_DOTS = [
-  { top: "8%", left: "7%", size: 3, delay: 0, duration: 4.2 },
-  { top: "14%", left: "23%", size: 2, delay: 1.2, duration: 3.6 },
-  { top: "10%", left: "78%", size: 4, delay: 0.6, duration: 4.8 },
-  { top: "23%", left: "91%", size: 2, delay: 1.8, duration: 3.9 },
-  { top: "31%", left: "12%", size: 4, delay: 0.9, duration: 4.6 },
-  { top: "38%", left: "27%", size: 2, delay: 2.1, duration: 3.7 },
-  { top: "45%", left: "84%", size: 3, delay: 1.4, duration: 4.4 },
-  { top: "54%", left: "6%", size: 2, delay: 0.3, duration: 3.5 },
-  { top: "62%", left: "94%", size: 4, delay: 2.5, duration: 4.9 },
-  { top: "69%", left: "18%", size: 3, delay: 1.1, duration: 4.1 },
-  { top: "76%", left: "78%", size: 2, delay: 0.5, duration: 3.8 },
-  { top: "84%", left: "9%", size: 3, delay: 2.2, duration: 4.5 },
-  { top: "90%", left: "42%", size: 2, delay: 1.7, duration: 3.6 },
-  { top: "94%", left: "88%", size: 3, delay: 0.8, duration: 4.7 },
-];
 
 /* =========================================================
    HELPERS
@@ -68,7 +53,38 @@ const parseResponse = async (response) => {
   }
 };
 
-const getImageUrl = (url) => {
+const optimizeCloudinaryUrl = (url, width = 160) => {
+  if (!url || !url.includes("res.cloudinary.com")) {
+    return url;
+  }
+
+  const uploadMarker = "/image/upload/";
+
+  if (!url.includes(uploadMarker)) {
+    return url;
+  }
+
+  const [base, deliveryPath] = url.split(uploadMarker);
+
+  if (!deliveryPath) {
+    return url;
+  }
+
+  const firstSegment = deliveryPath.split("/")[0];
+
+  const alreadyOptimized =
+    firstSegment.includes("f_auto") ||
+    firstSegment.includes("q_auto") ||
+    firstSegment.includes("w_");
+
+  if (alreadyOptimized) {
+    return url;
+  }
+
+  return `${base}${uploadMarker}f_auto,q_auto,w_${width},c_limit/${deliveryPath}`;
+};
+
+const getImageUrl = (url, width = 160) => {
   if (!url) {
     return "";
   }
@@ -79,19 +95,23 @@ const getImageUrl = (url) => {
     return "";
   }
 
-  if (
-    value.startsWith("http://") ||
-    value.startsWith("https://") ||
-    value.startsWith("blob:")
-  ) {
+  if (value.startsWith("blob:")) {
     return value;
   }
 
-  if (value.startsWith("/")) {
-    return `${API_BASE}${value}`;
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value.includes("res.cloudinary.com")
+      ? optimizeCloudinaryUrl(value, width)
+      : value;
   }
 
-  return `${API_BASE}/${value}`;
+  const mediaUrl = value.startsWith("/")
+    ? `${API_BASE}${value}`
+    : `${API_BASE}/${value}`;
+
+  return mediaUrl.includes("res.cloudinary.com")
+    ? optimizeCloudinaryUrl(mediaUrl, width)
+    : mediaUrl;
 };
 
 const getReviewId = (review, index) => {
@@ -103,19 +123,11 @@ const getReviewId = (review, index) => {
    ========================================================= */
 
 const Reviews = () => {
-  /* -------------------------------------------------------
-     REVIEWS
-     ------------------------------------------------------- */
-
   const [reviews, setReviews] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-
-  /* -------------------------------------------------------
-     FORM
-     ------------------------------------------------------- */
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [logoPreview, setLogoPreview] = useState("");
@@ -182,10 +194,6 @@ const Reviews = () => {
     fetchReviews();
   }, [fetchReviews]);
 
-  /* =======================================================
-     NEXT REVIEW
-     ======================================================= */
-
   const nextReview = useCallback(() => {
     if (reviews.length <= 1) {
       return;
@@ -195,10 +203,6 @@ const Reviews = () => {
 
     setActiveIndex((currentIndex) => (currentIndex + 1) % reviews.length);
   }, [reviews.length]);
-
-  /* =======================================================
-     PREVIOUS REVIEW
-     ======================================================= */
 
   const previousReview = useCallback(() => {
     if (reviews.length <= 1) {
@@ -211,10 +215,6 @@ const Reviews = () => {
       (currentIndex) => (currentIndex - 1 + reviews.length) % reviews.length,
     );
   }, [reviews.length]);
-
-  /* =======================================================
-     AUTOPLAY
-     ======================================================= */
 
   useEffect(() => {
     if (isLoading || isPaused || reviews.length <= 1) {
@@ -230,15 +230,7 @@ const Reviews = () => {
     };
   }, [isLoading, isPaused, reviews.length, nextReview]);
 
-  /* =======================================================
-     CURRENT REVIEW
-     ======================================================= */
-
   const currentReview = reviews[activeIndex] || null;
-
-  /* =======================================================
-     PREVIOUS / NEXT DATA
-     ======================================================= */
 
   const previousReviewData = useMemo(() => {
     if (reviews.length <= 1) {
@@ -266,10 +258,6 @@ const Reviews = () => {
     };
   }, [reviews, activeIndex]);
 
-  /* =======================================================
-     GO TO REVIEW
-     ======================================================= */
-
   const goToReview = useCallback(
     (index) => {
       if (reviews.length <= 1 || index === activeIndex) {
@@ -288,10 +276,6 @@ const Reviews = () => {
     [activeIndex, reviews.length],
   );
 
-  /* =======================================================
-     FORM INPUT
-     ======================================================= */
-
   const handleInputChange = useCallback((event) => {
     const { name, value } = event.target;
 
@@ -301,20 +285,12 @@ const Reviews = () => {
     }));
   }, []);
 
-  /* =======================================================
-     RATING
-     ======================================================= */
-
   const handleRatingChange = useCallback((rating) => {
     setForm((current) => ({
       ...current,
       rating: Math.max(1, Math.min(5, Number(rating))),
     }));
   }, []);
-
-  /* =======================================================
-     LOGO UPLOAD
-     ======================================================= */
 
   const handleLogoChange = useCallback((event) => {
     const file = event.target.files?.[0];
@@ -325,14 +301,12 @@ const Reviews = () => {
 
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file.");
-
       event.target.value = "";
       return;
     }
 
     if (file.size > MAX_LOGO_SIZE) {
       toast.error("Logo must be smaller than 5 MB.");
-
       event.target.value = "";
       return;
     }
@@ -344,7 +318,6 @@ const Reviews = () => {
     const preview = URL.createObjectURL(file);
 
     previewUrlRef.current = preview;
-
     setLogoPreview(preview);
 
     setForm((current) => ({
@@ -352,10 +325,6 @@ const Reviews = () => {
       logo: file,
     }));
   }, []);
-
-  /* =======================================================
-     CLEANUP PREVIEW
-     ======================================================= */
 
   useEffect(() => {
     return () => {
@@ -365,14 +334,9 @@ const Reviews = () => {
     };
   }, []);
 
-  /* =======================================================
-     RESET FORM
-     ======================================================= */
-
   const resetForm = useCallback(() => {
     if (previewUrlRef.current) {
       URL.revokeObjectURL(previewUrlRef.current);
-
       previewUrlRef.current = "";
     }
 
@@ -386,10 +350,6 @@ const Reviews = () => {
       fileInputRef.current.value = "";
     }
   }, []);
-
-  /* =======================================================
-     SUBMIT REVIEW
-     ======================================================= */
 
   const handleSubmitReview = async (event) => {
     event.preventDefault();
@@ -461,7 +421,6 @@ const Reviews = () => {
 
       if (createdReview && typeof createdReview === "object") {
         setReviews((current) => [createdReview, ...current]);
-
         setActiveIndex(0);
         setSlideDirection(-1);
       } else {
@@ -469,16 +428,11 @@ const Reviews = () => {
       }
     } catch (error) {
       console.error("Review submission error:", error);
-
       toast.error(error?.message || "Unable to submit your review.");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  /* =======================================================
-     RENDER
-     ======================================================= */
 
   return (
     <section
@@ -491,9 +445,7 @@ const Reviews = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* =====================================================
-          BACKGROUND LIGHT
-          ===================================================== */}
+      {/* BACKGROUND LIGHTS */}
 
       <div
         aria-hidden="true"
@@ -548,51 +500,7 @@ const Reviews = () => {
           }}
         />
 
-        {/* ===================================================
-            PULSING GOLDEN DOTS
-            =================================================== */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[2]
-            overflow-hidden
-          "
-        >
-          {GOLDEN_DOTS.map((dot, index) => (
-            <motion.span
-              key={`golden-dot-${index}`}
-              className="
-                absolute
-                rounded-full
-                bg-[#C9A66B]
-              "
-              style={{
-                top: dot.top,
-                left: dot.left,
-                width: `${dot.size}px`,
-                height: `${dot.size}px`,
-                boxShadow: "0 0 10px 2px rgba(201,166,107,0.55)",
-              }}
-              animate={{
-                opacity: [0.12, 0.7, 0.22, 0.9, 0.12],
-                scale: [0.7, 1.45, 0.8, 1.25, 0.7],
-              }}
-              transition={{
-                duration: dot.duration,
-                delay: dot.delay,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* ===================================================
-            SUBTLE GOLD PARTICLE TRAILS
-            =================================================== */}
+        {/* SUBTLE GOLD PARTICLE TRAILS */}
 
         <motion.div
           aria-hidden="true"
@@ -648,9 +556,7 @@ const Reviews = () => {
         />
       </div>
 
-      {/* =====================================================
-          CONTENT
-          ===================================================== */}
+      {/* CONTENT */}
 
       <div
         className="
@@ -667,10 +573,6 @@ const Reviews = () => {
           xl:px-16
         "
       >
-        {/* ===================================================
-            HEADER
-            =================================================== */}
-
         <header
           className="
             mx-auto
@@ -748,8 +650,6 @@ const Reviews = () => {
               "
             />
           </div>
-
-          {/* TITLE */}
 
           <motion.h2
             initial={{
@@ -841,10 +741,6 @@ const Reviews = () => {
           </motion.p>
         </header>
 
-        {/* ===================================================
-            REVIEWS
-            =================================================== */}
-
         <div
           className="
             mt-20
@@ -858,10 +754,6 @@ const Reviews = () => {
             <EmptyReviews />
           ) : (
             <>
-              {/* =================================================
-                  CAROUSEL STAGE
-                  ================================================= */}
-
               <div
                 className="
                   relative
@@ -875,8 +767,6 @@ const Reviews = () => {
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
               >
-                {/* CENTER GLOW */}
-
                 <motion.div
                   aria-hidden="true"
                   className="
@@ -903,10 +793,6 @@ const Reviews = () => {
                     ease: "easeInOut",
                   }}
                 />
-
-                {/* =================================================
-                    LEFT / PREVIOUS CARD
-                    ================================================= */}
 
                 {previousReviewData && (
                   <motion.div
@@ -942,10 +828,6 @@ const Reviews = () => {
                   </motion.div>
                 )}
 
-                {/* =================================================
-                    RIGHT / NEXT CARD
-                    ================================================= */}
-
                 {nextReviewData && (
                   <motion.div
                     key={`next-${getReviewId(
@@ -979,10 +861,6 @@ const Reviews = () => {
                     <ReviewCard review={nextReviewData.review} compact />
                   </motion.div>
                 )}
-
-                {/* =================================================
-                    CENTER ACTIVE CARD
-                    ================================================= */}
 
                 <AnimatePresence
                   initial={false}
@@ -1025,10 +903,6 @@ const Reviews = () => {
                   </motion.div>
                 </AnimatePresence>
               </div>
-
-              {/* =================================================
-                  CONTROLS
-                  ================================================= */}
 
               <div
                 className="
@@ -1102,10 +976,6 @@ const Reviews = () => {
           )}
         </div>
 
-        {/* ===================================================
-            SUBMIT REVIEW
-            =================================================== */}
-
         <SubmitReviewForm
           form={form}
           logoPreview={logoPreview}
@@ -1131,8 +1001,7 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
   }
 
   const rating = Math.max(0, Math.min(5, Number(review.rating || 0)));
-
-  const logoUrl = getImageUrl(review.logo);
+  const logoUrl = getImageUrl(review.logo, compact ? 120 : 160);
 
   return (
     <article
@@ -1147,8 +1016,6 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
           : "shadow-[0_30px_80px_rgba(0,0,0,0.42)]",
       ].join(" ")}
     >
-      {/* TOP GOLD LINE */}
-
       <motion.div
         aria-hidden="true"
         className="
@@ -1179,8 +1046,6 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
       />
 
       <div className={compact ? "p-8" : "p-7 sm:p-9 lg:p-10"}>
-        {/* TOP ROW */}
-
         <div
           className="
             flex
@@ -1191,18 +1056,10 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
           <Quote
             size={compact ? 30 : 34}
             strokeWidth={1}
-            className="
-              text-[#C9A66B]/60
-            "
+            className="text-[#C9A66B]/60"
           />
 
-          <div
-            className="
-              flex
-              items-center
-              gap-1
-            "
-          >
+          <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
@@ -1214,8 +1071,6 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
             ))}
           </div>
         </div>
-
-        {/* REVIEW */}
 
         <p
           className={
@@ -1241,17 +1096,7 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
           “{review.review}”
         </p>
 
-        {/* DIVIDER */}
-
-        <div
-          className="
-            my-7
-            h-px
-            bg-[#292722]
-          "
-        />
-
-        {/* CLIENT */}
+        <div className="my-7 h-px bg-[#292722]" />
 
         <div
           className="
@@ -1294,15 +1139,12 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
                     object-contain
                     p-2.5
                   "
-                  loading="lazy"
+                  loading={isActive ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={isActive ? "high" : "low"}
                 />
               ) : (
-                <span
-                  className="
-                    text-sm
-                    text-[#C9A66B]
-                  "
-                >
+                <span className="text-sm text-[#C9A66B]">
                   {String(review.name || "C")
                     .charAt(0)
                     .toUpperCase()}
@@ -1310,11 +1152,7 @@ const ReviewCard = ({ review, isActive = false, compact = false }) => {
               )}
             </div>
 
-            <div
-              className="
-                min-w-0
-              "
-            >
+            <div className="min-w-0">
               <h4
                 className="
                   truncate
@@ -1396,10 +1234,6 @@ const NavigationButton = ({ direction, onClick, disabled, label }) => {
   );
 };
 
-/* =========================================================
-   LOADING
-   ========================================================= */
-
 const LoadingReviews = () => {
   return (
     <div
@@ -1431,10 +1265,6 @@ const LoadingReviews = () => {
   );
 };
 
-/* =========================================================
-   EMPTY
-   ========================================================= */
-
 const EmptyReviews = () => {
   return (
     <div
@@ -1458,10 +1288,7 @@ const EmptyReviews = () => {
         <Quote
           size={34}
           strokeWidth={1}
-          className="
-            mx-auto
-            text-[#C9A66B]/50
-          "
+          className="mx-auto text-[#C9A66B]/50"
         />
 
         <h3
@@ -1491,10 +1318,6 @@ const EmptyReviews = () => {
     </div>
   );
 };
-
-/* =========================================================
-   SUBMIT FORM
-   ========================================================= */
 
 const SubmitReviewForm = ({
   form,
@@ -1542,8 +1365,6 @@ const SubmitReviewForm = ({
           lg:gap-20
         "
       >
-        {/* LEFT */}
-
         <div>
           <div
             className="
@@ -1594,8 +1415,6 @@ const SubmitReviewForm = ({
           </p>
         </div>
 
-        {/* RIGHT */}
-
         <form onSubmit={onSubmit}>
           <div
             className="
@@ -1610,8 +1429,6 @@ const SubmitReviewForm = ({
               lg:p-8
             "
           >
-            {/* NAME */}
-
             <div>
               <label
                 htmlFor="review-name"
@@ -1635,29 +1452,27 @@ const SubmitReviewForm = ({
                 onChange={onInputChange}
                 placeholder="Your name"
                 autoComplete="name"
-                maxLength={100}
-                required
-                disabled={isSubmitting}
                 className="
                   w-full
-                  border-b
-                  border-[#302F2A]
-                  bg-transparent
-                  px-0
-                  py-3
+                  rounded-2xl
+                  border
+                  border-[#292722]
+                  bg-[#080907]
+                  px-4
+                  py-3.5
                   text-sm
                   text-[#F5F3EE]
                   outline-none
-                  placeholder:text-[#4F4D47]
-                  focus:border-[#C9A66B]
+                  transition
+                  placeholder:text-[#55534D]
+                  focus:border-[#C9A66B]/60
                 "
               />
             </div>
 
-            {/* LOGO */}
-
-            <div className="mt-7">
+            <div className="mt-5">
               <label
+                htmlFor="review-logo"
                 className="
                   mb-2
                   block
@@ -1670,13 +1485,20 @@ const SubmitReviewForm = ({
                 Logo
               </label>
 
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => fileInputRef.current?.click()}
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-4
+                  rounded-2xl
+                  border
+                  border-[#292722]
+                  bg-[#080907]
+                  p-3
+                "
+              >
+                <div
                   className="
-                    group
                     flex
                     h-16
                     w-16
@@ -1684,12 +1506,10 @@ const SubmitReviewForm = ({
                     items-center
                     justify-center
                     overflow-hidden
-                    rounded-2xl
+                    rounded-xl
                     border
-                    border-dashed
-                    border-[#45423A]
-                    bg-[#11120F]
-                    hover:border-[#C9A66B]
+                    border-[#39362F]
+                    bg-[#0B0C0A]
                   "
                 >
                   {logoPreview ? (
@@ -1702,44 +1522,45 @@ const SubmitReviewForm = ({
                         object-contain
                         p-2
                       "
+                      decoding="async"
                     />
                   ) : (
-                    <span
-                      className="
-                        text-xl
-                        text-[#77746D]
-                        group-hover:text-[#C9A66B]
-                      "
-                    >
-                      +
-                    </span>
+                    <span className="text-xs text-[#55534D]">Logo</span>
                   )}
-                </button>
+                </div>
 
-                <div>
-                  <p className="text-sm text-[#D9D6CF]">Upload your logo</p>
-
-                  <p className="mt-1 text-xs text-[#626059]">
-                    PNG, JPG or WebP · Max 5 MB
-                  </p>
+                <div className="min-w-0 flex-1">
+                  <input
+                    ref={fileInputRef}
+                    id="review-logo"
+                    name="logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={onLogoChange}
+                    className="
+                      block
+                      w-full
+                      text-xs
+                      text-[#8D8A83]
+                      file:mr-3
+                      file:rounded-full
+                      file:border-0
+                      file:bg-[#C9A66B]
+                      file:px-4
+                      file:py-2
+                      file:text-xs
+                      file:font-medium
+                      file:text-[#080907]
+                    "
+                  />
                 </div>
               </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={onLogoChange}
-                className="hidden"
-              />
             </div>
 
-            {/* RATING */}
-
-            <div className="mt-7">
+            <div className="mt-5">
               <label
                 className="
-                  mb-3
+                  mb-2
                   block
                   text-[10px]
                   uppercase
@@ -1750,48 +1571,39 @@ const SubmitReviewForm = ({
                 Rating
               </label>
 
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((rating) => {
-                  const selected = rating <= Number(form.rating);
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const selected = star <= Number(form.rating);
 
                   return (
                     <button
-                      key={rating}
+                      key={star}
                       type="button"
-                      disabled={isSubmitting}
-                      aria-label={`${rating} star rating`}
-                      onClick={() => onRatingChange(rating)}
+                      aria-label={`${star} star${star === 1 ? "" : "s"}`}
+                      onClick={() => onRatingChange(star)}
                       className="
-                        flex
-                        h-10
-                        w-10
-                        items-center
-                        justify-center
+                        transition-transform
+                        duration-200
+                        hover:scale-110
                       "
                     >
                       <Star
-                        size={19}
-                        strokeWidth={1.4}
+                        size={22}
+                        strokeWidth={1.2}
                         fill={selected ? "#C9A66B" : "transparent"}
                         className={
-                          selected ? "text-[#C9A66B]" : "text-[#55524B]"
+                          selected ? "text-[#C9A66B]" : "text-[#4A4740]"
                         }
                       />
                     </button>
                   );
                 })}
-
-                <span className="ml-3 text-xs text-[#77746D]">
-                  {form.rating}/5
-                </span>
               </div>
             </div>
 
-            {/* REVIEW */}
-
-            <div className="mt-7">
+            <div className="mt-5">
               <label
-                htmlFor="review-message"
+                htmlFor="review-text"
                 className="
                   mb-2
                   block
@@ -1805,15 +1617,12 @@ const SubmitReviewForm = ({
               </label>
 
               <textarea
-                id="review-message"
+                id="review-text"
                 name="review"
                 value={form.review}
                 onChange={onInputChange}
                 placeholder="Tell us about your experience..."
-                rows={5}
-                maxLength={2000}
-                required
-                disabled={isSubmitting}
+                rows={6}
                 className="
                   w-full
                   resize-none
@@ -1822,58 +1631,23 @@ const SubmitReviewForm = ({
                   border-[#292722]
                   bg-[#080907]
                   px-4
-                  py-4
+                  py-3.5
                   text-sm
                   leading-7
                   text-[#F5F3EE]
                   outline-none
-                  placeholder:text-[#4F4D47]
-                  focus:border-[#C9A66B]
+                  transition
+                  placeholder:text-[#55534D]
+                  focus:border-[#C9A66B]/60
                 "
               />
             </div>
 
-            {/* SUBMIT */}
-
-            <GoldButton
-              type="submit"
-              disabled={isSubmitting}
-              className="
-                mt-7
-                w-full
-                px-6
-                py-4
-                text-xs
-                tracking-[0.2em]
-              "
-            >
-              {isSubmitting ? (
-                <>
-                  <motion.span
-                    animate={{
-                      rotate: 360,
-                    }}
-                    transition={{
-                      duration: 0.8,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="
-                      h-4
-                      w-4
-                      rounded-full
-                      border-2
-                      border-[#080907]/30
-                      border-t-[#080907]
-                    "
-                  />
-
-                  <span>Submitting</span>
-                </>
-              ) : (
-                "Submit review"
-              )}
-            </GoldButton>
+            <div className="mt-6">
+              <GoldButton type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit review"}
+              </GoldButton>
+            </div>
           </div>
         </form>
       </div>

@@ -1,26 +1,38 @@
 import Brand from "../models/brandModel.js";
+
 import Service from "../models/serviceModel.js";
+
 import Stat from "../models/statModel.js";
+
 import TechCapability from "../models/techCapabilityModel.js";
+
 import Review from "../models/reviewModel.js";
 
 import cloudinary from "../config/cloudinary.js";
 
 /* =========================================================
-   MODELS
-   ========================================================= */
+
+   MODELS
+
+   ========================================================= */
 
 const models = {
   brands: Brand,
+
   services: Service,
+
   stats: Stat,
+
   techCapabilities: TechCapability,
+
   reviews: Review,
 };
 
 /* =========================================================
-   GET MODEL
-   ========================================================= */
+
+   GET MODEL
+
+   ========================================================= */
 
 const getModel = (type) => {
   const Model = models[type];
@@ -33,19 +45,24 @@ const getModel = (type) => {
 };
 
 /* =========================================================
-   CLOUDINARY UPLOAD HELPERS
-   ========================================================= */
+
+   CLOUDINARY UPLOAD HELPERS
+
+   ========================================================= */
 
 const uploadBrandLogo = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: "being-iban-digital/brands",
+
         resource_type: "image",
       },
+
       (error, result) => {
         if (error) {
           reject(error);
+
           return;
         }
 
@@ -62,11 +79,14 @@ const uploadServiceIcon = (fileBuffer) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: "being-iban-digital/services",
+
         resource_type: "image",
       },
+
       (error, result) => {
         if (error) {
           reject(error);
+
           return;
         }
 
@@ -83,11 +103,14 @@ const uploadTechCapabilityIcon = (fileBuffer) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: "being-iban-digital/tech-capabilities",
+
         resource_type: "image",
       },
+
       (error, result) => {
         if (error) {
           reject(error);
+
           return;
         }
 
@@ -104,11 +127,14 @@ const uploadReviewLogo = (fileBuffer) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: "being-iban-digital/reviews",
+
         resource_type: "image",
       },
+
       (error, result) => {
         if (error) {
           reject(error);
+
           return;
         }
 
@@ -121,8 +147,10 @@ const uploadReviewLogo = (fileBuffer) => {
 };
 
 /* =========================================================
-   CLOUDINARY DELETE HELPER
-   ========================================================= */
+
+   CLOUDINARY DELETE HELPER
+
+   ========================================================= */
 
 const deleteCloudinaryImage = async (imageUrl) => {
   if (!imageUrl) {
@@ -163,8 +191,10 @@ const deleteCloudinaryImage = async (imageUrl) => {
 };
 
 /* =========================================================
-   SERVICE FEATURES NORMALIZER
-   ========================================================= */
+
+   SERVICE FEATURES NORMALIZER
+
+   ========================================================= */
 
 const normalizeServiceFeatures = (features) => {
   if (Array.isArray(features)) {
@@ -183,8 +213,11 @@ const normalizeServiceFeatures = (features) => {
     }
 
     return features
+
       .split(/\r?\n|,/)
+
       .map((feature) => feature.trim())
+
       .filter(Boolean);
   }
 
@@ -192,8 +225,10 @@ const normalizeServiceFeatures = (features) => {
 };
 
 /* =========================================================
-   SERVICE DATA NORMALIZER
-   ========================================================= */
+
+   SERVICE DATA NORMALIZER
+
+   ========================================================= */
 
 const normalizeServiceData = (body = {}) => {
   return {
@@ -209,8 +244,10 @@ const normalizeServiceData = (body = {}) => {
 };
 
 /* =========================================================
-   TECH CAPABILITY DATA NORMALIZER
-   ========================================================= */
+
+   TECH CAPABILITY DATA NORMALIZER
+
+   ========================================================= */
 
 const normalizeTechCapabilityData = (body = {}) => {
   return {
@@ -223,8 +260,10 @@ const normalizeTechCapabilityData = (body = {}) => {
 };
 
 /* =========================================================
-   REVIEW DATA NORMALIZER
-   ========================================================= */
+
+   REVIEW DATA NORMALIZER
+
+   ========================================================= */
 
 const normalizeReviewData = (body = {}) => {
   const rating = Number(body.rating);
@@ -239,8 +278,10 @@ const normalizeReviewData = (body = {}) => {
 };
 
 /* =========================================================
-   PUBLIC - GET CONTENT
-   ========================================================= */
+
+   PUBLIC - GET CONTENT
+
+   ========================================================= */
 
 export const getPublicContent = async (req, res) => {
   try {
@@ -248,103 +289,126 @@ export const getPublicContent = async (req, res) => {
 
     console.log(`Public website request: /${type}`);
 
-    const Model = getModel(type);
+    const Model =
+      getModel(type); /* ===============================================
 
-    /* ===============================================
-         BRANDS
-         =============================================== */
+         BRANDS
+
+         =============================================== */
 
     if (type === "brands") {
       const items = await Brand.find({})
+
         .sort({
           createdAt: -1,
         })
+
         .lean();
 
       console.log(`Brands found: ${items.length}`);
 
       return res.status(200).json({
         success: true,
+
         count: items.length,
+
         data: items,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         STATS
-         =============================================== */
+         STATS
+
+         =============================================== */
 
     if (type === "stats") {
       const items = await Stat.find({})
+
         .sort({
           createdAt: -1,
         })
+
         .lean();
 
       return res.status(200).json({
         success: true,
+
         count: items.length,
+
         data: items,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         SERVICES
-         =============================================== */
+         SERVICES
+
+         =============================================== */
 
     if (type === "services") {
       const items = await Service.find({})
+
         .sort({
           createdAt: -1,
         })
+
         .lean();
 
       return res.status(200).json({
         success: true,
+
         count: items.length,
+
         data: items,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         TECH CAPABILITIES
-         =============================================== */
+         TECH CAPABILITIES
+
+         =============================================== */
 
     if (type === "techCapabilities") {
       const items = await TechCapability.find({})
+
         .sort({
           createdAt: -1,
         })
+
         .lean();
 
       return res.status(200).json({
         success: true,
+
         count: items.length,
+
         data: items,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         REVIEWS
-         =============================================== */
+         REVIEWS
+
+         =============================================== */
 
     if (type === "reviews") {
       const items = await Review.find({})
+
         .sort({
           createdAt: -1,
         })
+
         .lean();
 
       return res.status(200).json({
         success: true,
+
         count: items.length,
+
         data: items,
       });
     }
 
     return res.status(200).json({
       success: true,
+
       count: 0,
+
       data: [],
     });
   } catch (error) {
@@ -352,30 +416,41 @@ export const getPublicContent = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: error.message,
+
       data: [],
     });
   }
 };
 
 /* =========================================================
-   PUBLIC - CREATE REVIEW
-   =========================================================
 
-   POST:
-   /api/website/reviews
+   PUBLIC - CREATE REVIEW
 
-   multipart/form-data:
+   =========================================================
 
-   name
-   rating
-   review
-   logo
+   POST:
 
-   IMPORTANT:
-   This is intentionally separate from createContent()
-   because /reviews has no :type route parameter.
-   ========================================================= */
+   /api/website/reviews
+
+   multipart/form-data:
+
+   name
+
+   rating
+
+   review
+
+   logo
+
+   IMPORTANT:
+
+   This is intentionally separate from createContent()
+
+   because /reviews has no :type route parameter.
+
+   ========================================================= */
 
 export const createPublicReview = async (req, res) => {
   try {
@@ -387,71 +462,83 @@ export const createPublicReview = async (req, res) => {
 
     console.log(
       "File:",
+
       req.file
         ? {
             fieldname: req.file.fieldname,
+
             originalname: req.file.originalname,
+
             mimetype: req.file.mimetype,
+
             size: req.file.size,
           }
         : null,
     );
 
-    console.log("========================================");
+    console.log(
+      "========================================",
+    ); /* =============================================
 
-    /* =============================================
-         NORMALIZE
-         ============================================= */
+         NORMALIZE
 
-    const data = normalizeReviewData(req.body);
+         ============================================= */
 
-    /* =============================================
-         VALIDATE NAME
-         ============================================= */
+    const data = normalizeReviewData(
+      req.body,
+    ); /* =============================================
+
+         VALIDATE NAME
+
+         ============================================= */
 
     if (!data.name) {
       return res.status(400).json({
         success: false,
+
         message: "Review name is required",
       });
-    }
+    } /* =============================================
 
-    /* =============================================
-         VALIDATE RATING
-         ============================================= */
+         VALIDATE RATING
+
+         ============================================= */
 
     if (!Number.isFinite(data.rating) || data.rating < 1 || data.rating > 5) {
       return res.status(400).json({
         success: false,
+
         message: "Review rating must be between 1 and 5",
       });
-    }
+    } /* =============================================
 
-    /* =============================================
-         VALIDATE REVIEW
-         ============================================= */
+         VALIDATE REVIEW
+
+         ============================================= */
 
     if (!data.review) {
       return res.status(400).json({
         success: false,
+
         message: "Review text is required",
       });
-    }
+    } /* =============================================
 
-    /* =============================================
-         VALIDATE LOGO
-         ============================================= */
+         VALIDATE LOGO
+
+         ============================================= */
 
     if (!req.file) {
       return res.status(400).json({
         success: false,
+
         message: "Review logo is required",
       });
-    }
+    } /* =============================================
 
-    /* =============================================
-         UPLOAD LOGO
-         ============================================= */
+         UPLOAD LOGO
+
+         ============================================= */
 
     const uploadResult = await uploadReviewLogo(req.file.buffer);
 
@@ -459,11 +546,12 @@ export const createPublicReview = async (req, res) => {
       throw new Error("Cloudinary upload failed");
     }
 
-    data.logo = uploadResult.secure_url;
+    data.logo =
+      uploadResult.secure_url; /* =============================================
 
-    /* =============================================
-         CREATE REVIEW
-         ============================================= */
+         CREATE REVIEW
+
+         ============================================= */
 
     const review = await Review.create(data);
 
@@ -471,7 +559,9 @@ export const createPublicReview = async (req, res) => {
 
     return res.status(201).json({
       success: true,
+
       message: "Review submitted successfully",
+
       data: review,
     });
   } catch (error) {
@@ -479,14 +569,17 @@ export const createPublicReview = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: error.message || "Unable to submit review",
     });
   }
 };
 
 /* =========================================================
-   ADMIN - GET ALL
-   ========================================================= */
+
+   ADMIN - GET ALL
+
+   ========================================================= */
 
 export const getAdminContent = async (req, res) => {
   try {
@@ -500,6 +593,7 @@ export const getAdminContent = async (req, res) => {
 
     return res.json({
       success: true,
+
       data: items,
     });
   } catch (error) {
@@ -507,14 +601,17 @@ export const getAdminContent = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: error.message,
     });
   }
 };
 
 /* =========================================================
-   ADMIN - GET ONE
-   ========================================================= */
+
+   ADMIN - GET ONE
+
+   ========================================================= */
 
 export const getAdminContentById = async (req, res) => {
   try {
@@ -525,12 +622,14 @@ export const getAdminContentById = async (req, res) => {
     if (!item) {
       return res.status(404).json({
         success: false,
+
         message: "Content not found",
       });
     }
 
     return res.json({
       success: true,
+
       data: item,
     });
   } catch (error) {
@@ -538,24 +637,28 @@ export const getAdminContentById = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: error.message,
     });
   }
 };
 
 /* =========================================================
-   ADMIN - CREATE
-   ========================================================= */
+
+   ADMIN - CREATE
+
+   ========================================================= */
 
 export const createContent = async (req, res) => {
   try {
     const { type } = req.params;
 
-    const Model = getModel(type);
+    const Model =
+      getModel(type); /* ===============================================
 
-    /* ===============================================
-         SERVICES
-         =============================================== */
+         SERVICES
+
+         =============================================== */
 
     if (type === "services") {
       const data = normalizeServiceData(req.body);
@@ -563,6 +666,7 @@ export const createContent = async (req, res) => {
       if (!data.title) {
         return res.status(400).json({
           success: false,
+
           message: "Service title is required",
         });
       }
@@ -570,6 +674,7 @@ export const createContent = async (req, res) => {
       if (!data.shortDescription) {
         return res.status(400).json({
           success: false,
+
           message: "Service short description is required",
         });
       }
@@ -577,6 +682,7 @@ export const createContent = async (req, res) => {
       if (!data.features.length) {
         return res.status(400).json({
           success: false,
+
           message: "At least one service feature is required",
         });
       }
@@ -584,6 +690,7 @@ export const createContent = async (req, res) => {
       if (!req.file) {
         return res.status(400).json({
           success: false,
+
           message: "Service icon is required",
         });
       }
@@ -596,37 +703,44 @@ export const createContent = async (req, res) => {
 
       return res.status(201).json({
         success: true,
+
         message: "Service created successfully",
+
         data: service,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         STATS
-         =============================================== */
+         STATS
+
+         =============================================== */
 
     if (type === "stats") {
       const stat = await Model.create({
         value: req.body.value,
+
         suffix: req.body.suffix || "",
+
         label: req.body.label,
       });
 
       return res.status(201).json({
         success: true,
+
         message: "Stat created successfully",
+
         data: stat,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         BRANDS
-         =============================================== */
+         BRANDS
+
+         =============================================== */
 
     if (type === "brands") {
       if (!req.file) {
         return res.status(400).json({
           success: false,
+
           message: "Brand logo is required",
         });
       }
@@ -648,14 +762,16 @@ export const createContent = async (req, res) => {
 
       return res.status(201).json({
         success: true,
+
         message: "Brand created successfully",
+
         data: brand,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         TECH CAPABILITIES
-         =============================================== */
+         TECH CAPABILITIES
+
+         =============================================== */
 
     if (type === "techCapabilities") {
       const data = normalizeTechCapabilityData(req.body);
@@ -663,6 +779,7 @@ export const createContent = async (req, res) => {
       if (!data.title) {
         return res.status(400).json({
           success: false,
+
           message: "Technology capability title is required",
         });
       }
@@ -670,6 +787,7 @@ export const createContent = async (req, res) => {
       if (!data.line1 && !data.line2) {
         return res.status(400).json({
           success: false,
+
           message: "Select Line 1 or Line 2",
         });
       }
@@ -677,6 +795,7 @@ export const createContent = async (req, res) => {
       if (data.line1 && data.line2) {
         return res.status(400).json({
           success: false,
+
           message: "A technology capability can belong to only one line",
         });
       }
@@ -684,6 +803,7 @@ export const createContent = async (req, res) => {
       if (!req.file) {
         return res.status(400).json({
           success: false,
+
           message: "Technology capability icon is required",
         });
       }
@@ -696,14 +816,16 @@ export const createContent = async (req, res) => {
 
       return res.status(201).json({
         success: true,
+
         message: "Technology capability created successfully",
+
         data: capability,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         REVIEWS - ADMIN
-         =============================================== */
+         REVIEWS - ADMIN
+
+         =============================================== */
 
     if (type === "reviews") {
       const data = normalizeReviewData(req.body);
@@ -711,6 +833,7 @@ export const createContent = async (req, res) => {
       if (!data.name) {
         return res.status(400).json({
           success: false,
+
           message: "Review name is required",
         });
       }
@@ -718,6 +841,7 @@ export const createContent = async (req, res) => {
       if (!Number.isFinite(data.rating) || data.rating < 1 || data.rating > 5) {
         return res.status(400).json({
           success: false,
+
           message: "Review rating must be between 1 and 5",
         });
       }
@@ -725,6 +849,7 @@ export const createContent = async (req, res) => {
       if (!data.review) {
         return res.status(400).json({
           success: false,
+
           message: "Review text is required",
         });
       }
@@ -732,6 +857,7 @@ export const createContent = async (req, res) => {
       if (!req.file) {
         return res.status(400).json({
           success: false,
+
           message: "Review logo is required",
         });
       }
@@ -744,14 +870,16 @@ export const createContent = async (req, res) => {
 
       return res.status(201).json({
         success: true,
+
         message: "Review created successfully",
+
         data: review,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         OTHER CONTENT
-         =============================================== */
+         OTHER CONTENT
+
+         =============================================== */
 
     const item = await Model.create({
       ...req.body,
@@ -759,7 +887,9 @@ export const createContent = async (req, res) => {
 
     return res.status(201).json({
       success: true,
+
       message: "Content created successfully",
+
       data: item,
     });
   } catch (error) {
@@ -767,14 +897,17 @@ export const createContent = async (req, res) => {
 
     return res.status(400).json({
       success: false,
+
       message: error.message,
     });
   }
 };
 
 /* =========================================================
-   ADMIN - UPDATE
-   ========================================================= */
+
+   ADMIN - UPDATE
+
+   ========================================================= */
 
 export const updateContent = async (req, res) => {
   try {
@@ -787,13 +920,14 @@ export const updateContent = async (req, res) => {
     if (!existingItem) {
       return res.status(404).json({
         success: false,
+
         message: "Content not found",
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         SERVICES
-         =============================================== */
+         SERVICES
+
+         =============================================== */
 
     if (type === "services") {
       const data = normalizeServiceData(req.body);
@@ -801,6 +935,7 @@ export const updateContent = async (req, res) => {
       if (!data.title) {
         return res.status(400).json({
           success: false,
+
           message: "Service title is required",
         });
       }
@@ -808,6 +943,7 @@ export const updateContent = async (req, res) => {
       if (!data.shortDescription) {
         return res.status(400).json({
           success: false,
+
           message: "Service short description is required",
         });
       }
@@ -815,6 +951,7 @@ export const updateContent = async (req, res) => {
       if (!data.features.length) {
         return res.status(400).json({
           success: false,
+
           message: "At least one service feature is required",
         });
       }
@@ -827,6 +964,7 @@ export const updateContent = async (req, res) => {
 
       const service = await Model.findByIdAndUpdate(id, data, {
         new: true,
+
         runValidators: true,
       });
 
@@ -836,18 +974,21 @@ export const updateContent = async (req, res) => {
 
       return res.json({
         success: true,
+
         message: "Service updated successfully",
+
         data: service,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         STATS
-         =============================================== */
+         STATS
+
+         =============================================== */
 
     if (type === "stats") {
       const stat = await Model.findByIdAndUpdate(
         id,
+
         {
           value: req.body.value,
 
@@ -855,22 +996,26 @@ export const updateContent = async (req, res) => {
 
           label: req.body.label,
         },
+
         {
           new: true,
+
           runValidators: true,
         },
       );
 
       return res.json({
         success: true,
+
         message: "Stat updated successfully",
+
         data: stat,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         BRANDS
-         =============================================== */
+         BRANDS
+
+         =============================================== */
 
     if (type === "brands") {
       const data = {
@@ -890,6 +1035,7 @@ export const updateContent = async (req, res) => {
 
       const brand = await Model.findByIdAndUpdate(id, data, {
         new: true,
+
         runValidators: true,
       });
 
@@ -903,14 +1049,16 @@ export const updateContent = async (req, res) => {
 
       return res.json({
         success: true,
+
         message: "Brand updated successfully",
+
         data: brand,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         TECH CAPABILITIES
-         =============================================== */
+         TECH CAPABILITIES
+
+         =============================================== */
 
     if (type === "techCapabilities") {
       const data = normalizeTechCapabilityData(req.body);
@@ -918,6 +1066,7 @@ export const updateContent = async (req, res) => {
       if (!data.title) {
         return res.status(400).json({
           success: false,
+
           message: "Technology capability title is required",
         });
       }
@@ -925,6 +1074,7 @@ export const updateContent = async (req, res) => {
       if (!data.line1 && !data.line2) {
         return res.status(400).json({
           success: false,
+
           message: "Select Line 1 or Line 2",
         });
       }
@@ -932,6 +1082,7 @@ export const updateContent = async (req, res) => {
       if (data.line1 && data.line2) {
         return res.status(400).json({
           success: false,
+
           message: "A technology capability can belong to only one line",
         });
       }
@@ -946,6 +1097,7 @@ export const updateContent = async (req, res) => {
 
       const capability = await Model.findByIdAndUpdate(id, data, {
         new: true,
+
         runValidators: true,
       });
 
@@ -959,14 +1111,16 @@ export const updateContent = async (req, res) => {
 
       return res.json({
         success: true,
+
         message: "Technology capability updated successfully",
+
         data: capability,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         REVIEWS
-         =============================================== */
+         REVIEWS
+
+         =============================================== */
 
     if (type === "reviews") {
       const data = normalizeReviewData(req.body);
@@ -974,6 +1128,7 @@ export const updateContent = async (req, res) => {
       if (!data.name) {
         return res.status(400).json({
           success: false,
+
           message: "Review name is required",
         });
       }
@@ -981,6 +1136,7 @@ export const updateContent = async (req, res) => {
       if (!Number.isFinite(data.rating) || data.rating < 1 || data.rating > 5) {
         return res.status(400).json({
           success: false,
+
           message: "Review rating must be between 1 and 5",
         });
       }
@@ -988,6 +1144,7 @@ export const updateContent = async (req, res) => {
       if (!data.review) {
         return res.status(400).json({
           success: false,
+
           message: "Review text is required",
         });
       }
@@ -1003,12 +1160,14 @@ export const updateContent = async (req, res) => {
       if (!data.logo) {
         return res.status(400).json({
           success: false,
+
           message: "Review logo is required",
         });
       }
 
       const review = await Model.findByIdAndUpdate(id, data, {
         new: true,
+
         runValidators: true,
       });
 
@@ -1018,29 +1177,36 @@ export const updateContent = async (req, res) => {
 
       return res.json({
         success: true,
+
         message: "Review updated successfully",
+
         data: review,
       });
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         OTHER CONTENT
-         =============================================== */
+         OTHER CONTENT
+
+         =============================================== */
 
     const item = await Model.findByIdAndUpdate(
       id,
+
       {
         ...req.body,
       },
+
       {
         new: true,
+
         runValidators: true,
       },
     );
 
     return res.json({
       success: true,
+
       message: "Content updated successfully",
+
       data: item,
     });
   } catch (error) {
@@ -1048,14 +1214,17 @@ export const updateContent = async (req, res) => {
 
     return res.status(400).json({
       success: false,
+
       message: error.message,
     });
   }
 };
 
 /* =========================================================
-   ADMIN - DELETE
-   ========================================================= */
+
+   ADMIN - DELETE
+
+   ========================================================= */
 
 export const deleteContent = async (req, res) => {
   try {
@@ -1068,39 +1237,42 @@ export const deleteContent = async (req, res) => {
     if (!item) {
       return res.status(404).json({
         success: false,
+
         message: "Content not found",
       });
     }
 
-    await Model.findByIdAndDelete(id);
+    await Model.findByIdAndDelete(
+      id,
+    ); /* ===============================================
 
-    /* ===============================================
-         BRAND IMAGE
-         =============================================== */
+         BRAND IMAGE
+
+         =============================================== */
 
     if (type === "brands" && item.logoUrl) {
       await deleteCloudinaryImage(item.logoUrl);
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         SERVICE IMAGE
-         =============================================== */
+         SERVICE IMAGE
+
+         =============================================== */
 
     if (type === "services" && item.icon) {
       await deleteCloudinaryImage(item.icon);
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         TECH CAPABILITY IMAGE
-         =============================================== */
+         TECH CAPABILITY IMAGE
+
+         =============================================== */
 
     if (type === "techCapabilities" && item.icon) {
       await deleteCloudinaryImage(item.icon);
-    }
+    } /* ===============================================
 
-    /* ===============================================
-         REVIEW IMAGE
-         =============================================== */
+         REVIEW IMAGE
+
+         =============================================== */
 
     if (type === "reviews" && item.logo) {
       await deleteCloudinaryImage(item.logo);
@@ -1108,6 +1280,7 @@ export const deleteContent = async (req, res) => {
 
     return res.json({
       success: true,
+
       message: "Content deleted successfully",
     });
   } catch (error) {
@@ -1115,6 +1288,7 @@ export const deleteContent = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: error.message,
     });
   }

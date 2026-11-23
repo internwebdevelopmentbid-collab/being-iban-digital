@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import ServicesAmbientIcons from "./ServicesAmbientIcons";
 
@@ -18,8 +19,25 @@ const services = [
   "GMB Profile Setup",
 ];
 
+const serviceUrls = [
+  "/additional-services/website-development",
+  "/additional-services/graphics-designing",
+  "/additional-services/app-development",
+  "/additional-services/content-marketing",
+  "/additional-services/e-commerce-website",
+  "/additional-services/seo-services",
+  "/additional-services/google-ads-management",
+  "/additional-services/linkedin-youtube-marketing",
+  "/additional-services/photography-videography",
+  "/additional-services/meta-ads-marketing",
+  "/additional-services/influencer-marketing",
+  "/additional-services/social-media-marketing",
+  "/additional-services/gmb-profile-setup",
+];
+
 const AdditionalServices = () => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const navigate = useNavigate();
 
   return (
     <section
@@ -210,6 +228,7 @@ const AdditionalServices = () => {
                     relative
                     w-full
                     overflow-hidden
+                    cursor-pointer
                     border-b
                     border-[#F5F3EE]/10
                     transition-colors
@@ -219,6 +238,7 @@ const AdditionalServices = () => {
                     h-[82px]
                     md:h-[92px]
                   `}
+                  onClick={() => navigate(serviceUrls[index])}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                 >

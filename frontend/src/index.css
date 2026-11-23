@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Google+Sans+Flex:opsz,slnt,wdth,wght,ROND@8..144,-10..0,25..150,400..700,0..100&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -16,19 +15,25 @@
   --font-google:
     "Google Sans Flex", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
+
+  --font-serif: "DM Serif Display", Georgia, "Times New Roman", serif;
 }
+
+/* ---------------------------------
+   Base
+--------------------------------- */
 
 html {
   scroll-behavior: auto;
+  background: var(--bg-primary);
 }
 
 body {
   margin: 0;
+  min-width: 320px;
   background: var(--bg-primary);
   color: var(--text-primary);
-
   font-family: var(--font-google);
-
   font-weight: 400;
   letter-spacing: -0.01em;
 
@@ -61,10 +66,6 @@ body {
   font-family: var(--font-google);
   font-weight: 400;
 }
-
-/* ---------------------------------
-   Premium marketing typography
---------------------------------- */
 
 h1,
 h2,
@@ -141,7 +142,184 @@ select {
 }
 
 /* ---------------------------------
-   Reduced motion
+   Global ambient dots
+--------------------------------- */
+
+@keyframes globalDotPulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 0.65;
+  }
+}
+
+.global-pulsing-dot {
+  animation-name: globalDotPulse;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* ---------------------------------
+   Serif accent
+--------------------------------- */
+
+.hero-heart {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -0.045em;
+  color: #c9a66b;
+}
+
+/* ---------------------------------
+   Hero atmosphere
+--------------------------------- */
+
+@keyframes heroConstellationPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(-50%, -50%, 0) scale(0.96);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: translate3d(-50%, -50%, 0) scale(1.03);
+  }
+}
+
+.hero-constellation-atmosphere {
+  animation: heroConstellationPulse 8s ease-in-out infinite;
+}
+
+/* ---------------------------------
+   Constellation orbit
+--------------------------------- */
+
+.constellation-orbit {
+  animation: constellationOrbit 52s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes constellationOrbit {
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* ---------------------------------
+   Constellation status indicator
+--------------------------------- */
+
+.constellation-status-dot {
+  animation: constellationStatusPulse 3.2s ease-in-out infinite;
+}
+
+@keyframes constellationStatusPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    scale: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+    scale: 1.2;
+  }
+}
+
+/* ---------------------------------
+   Constellation core glow
+--------------------------------- */
+
+.constellation-core-glow {
+  animation: constellationCorePulse 4s ease-in-out infinite;
+}
+
+@keyframes constellationCorePulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    scale: 0.7;
+  }
+
+  50% {
+    opacity: 0.75;
+    scale: 1.05;
+  }
+}
+
+/* ---------------------------------
+   Constellation connections
+--------------------------------- */
+
+.constellation-connection {
+  transition:
+    opacity 300ms ease,
+    stroke-width 300ms ease;
+}
+
+/* ---------------------------------
+   Hero brand logos
+--------------------------------- */
+
+.hero-brand-logos {
+  animation: heroBrandsEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
+.hero-brand-logo {
+  animation: heroBrandLogoEnter 0.4s cubic-bezier(0.22, 1, 0.36, 1)
+    calc(0.4s + var(--logo-index, 0) * 0.06s) both;
+}
+
+@keyframes heroBrandsEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroBrandLogoEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(-6px, 0, 0) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* ---------------------------------
+   Mobile animation optimization
+--------------------------------- */
+
+/* Disable decorative, continuously running animations on mobile.
+   Desktop animations and all existing visual styles remain unchanged. */
+@media (max-width: 850px) {
+  .constellation-orbit,
+  .constellation-status-dot,
+  .constellation-core-glow,
+  .hero-constellation-atmosphere {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------
+   Reduced motion accessibility
 --------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -157,12 +335,26 @@ select {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
 
-.hero-heart {
-  font-family: "DM Serif Display", Georgia, serif;
-  font-weight: 400;
-  font-style: normal;
-  letter-spacing: -0.045em;
-  color: #c9a66b;
+  .global-pulsing-dot,
+  .hero-constellation-atmosphere,
+  .constellation-orbit,
+  .constellation-status-dot,
+  .constellation-core-glow {
+    animation: none !important;
+  }
+
+  .hero-constellation-atmosphere {
+    opacity: 0.55;
+    transform: translate3d(-50%, -50%, 0) scale(0.96);
+  }
+
+  .constellation-connection {
+    transition: none;
+  }
+
+  .hero-brand-logos,
+  .hero-brand-logo {
+    animation: none !important;
+  }
 }

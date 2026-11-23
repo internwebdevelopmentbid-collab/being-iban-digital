@@ -1,157 +1,603 @@
-import {
-  motion,
-  useMotionValueEvent,
-  useScroll,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import { motion, useAnimationControls, useInView } from "framer-motion";
+
 import { useEffect, useRef, useState } from "react";
 
 import api_url from "../../config/api";
 
-const CONTENT_START = 0.04;
-const CONTENT_END = 0.14;
+const STATS_ENDPOINT = `${api_url}/api/website/stats`;
 
-const SEQUENCE_START = 0.22;
-const SEQUENCE_END = 0.64;
+const SLOT_CYCLES = 5;
+const SLOT_DURATION = 2.4;
+const SLOT_DELAY_STEP = 80;
 
-/*
- * The camera-out starts earlier and finishes before
- * the sticky section releases, so the next component
- * cannot appear through the white transition.
- */
-const EXIT_START = 0.58;
-const EXIT_END = 0.86;
-
-/*
- * Fixed camera focal point inside the original number.
- *
- * The number is rendered as SVG so the extreme zoom
- * remains vector-sharp.
- */
-const NUMBER_FOCAL_X = 62;
-const NUMBER_FOCAL_Y = 50;
-
-/*
- * =========================================
- * CONSISTENT SCROLL SPRING
- * =========================================
- *
- * Keep this identical across devices.
- *
- * The previous responsive spring approach made
- * the same physical scroll gesture feel different
- * on phone/tablet/desktop.
- *
- * This spring is intentionally quick enough to
- * follow touch scrolling while still preserving
- * the smooth weighted motion.
- */
-const SCROLL_SPRING = {
-  stiffness: 180,
-  damping: 36,
-  mass: 0.2,
-  restDelta: 0.001,
+const REEL_ANIMATION = {
+  duration: SLOT_DURATION,
+  ease: [0.12, 0.82, 0.16, 1],
 };
 
-/*
- * =========================================
- * BACKGROUND GOLD DOT
- * =========================================
- */
+const StatIcon = ({ type = "chart", left, top, size = 42, delay = 0 }) => {
+  const commonProps = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    xmlns: "http://www.w3.org/2000/svg",
+    className: `
+      pointer-events-none
+      absolute
+      z-0
+      text-[#C9A66B]
+    `,
+    style: {
+      left,
+      top,
+    },
+    "aria-hidden": true,
+  };
 
-const GoldDot = ({
-  left,
-  top,
-  size = 5,
-  duration = 3.8,
-  delay = 0,
-  opacity = [0.12, 0.55, 0.12],
-  scale = [0.8, 1.4, 0.8],
-}) => {
+  const iconAnimation = {
+    opacity: [0.03, 0.15, 0.03],
+    scale: [0.94, 1.06, 0.94],
+    y: [0, -4, 0],
+  };
+
+  const iconTransition = {
+    duration: 4.5,
+    delay,
+    repeat: Infinity,
+    ease: "easeInOut",
+  };
+
+  if (type === "percent") {
+    return (
+      <motion.svg
+        {...commonProps}
+        animate={iconAnimation}
+        transition={iconTransition}
+      >
+        <path
+          d="M7 7L17 17"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+
+        <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+
+        <circle
+          cx="17"
+          cy="17"
+          r="2.5"
+          stroke="currentColor"
+          strokeWidth="1.4"
+        />
+      </motion.svg>
+    );
+  }
+
+  if (type === "growth") {
+    return (
+      <motion.svg
+        {...commonProps}
+        animate={iconAnimation}
+        transition={iconTransition}
+      >
+        <path
+          d="M4 17L10 11L14 15L20 8"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        <path
+          d="M15 8H20V13"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </motion.svg>
+    );
+  }
+
+  if (type === "bars") {
+    return (
+      <motion.svg
+        {...commonProps}
+        animate={iconAnimation}
+        transition={iconTransition}
+      >
+        <path
+          d="M5 19V11"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M12 19V6"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M19 19V3"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </motion.svg>
+    );
+  }
+
+  if (type === "target") {
+    return (
+      <motion.svg
+        {...commonProps}
+        animate={iconAnimation}
+        transition={iconTransition}
+      >
+        <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.4" />
+
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.4" />
+
+        <path
+          d="M12 2V5"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M12 19V22"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M2 12H5"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M19 12H22"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+      </motion.svg>
+    );
+  }
+
   return (
-    <motion.span
-      aria-hidden="true"
-      animate={{
-        opacity,
-        scale,
-      }}
-      transition={{
-        duration,
-        delay,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
+    <motion.svg
+      {...commonProps}
+      animate={iconAnimation}
+      transition={iconTransition}
+    >
+      <path
+        d="M4 19V5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M4 19H20"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M7 15L11 11L14 13L19 7"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </motion.svg>
+  );
+};
+
+const SlotDigit = ({ digit, index }) => {
+  const containerRef = useRef(null);
+
+  const isInView = useInView(containerRef, {
+    once: true,
+    amount: 0.5,
+  });
+
+  const controls = useAnimationControls();
+
+  const finalDigit = Number(digit);
+  const targetIndex = SLOT_CYCLES * 10 + finalDigit;
+
+  const reelDigits = Array.from(
+    {
+      length: targetIndex + 10,
+    },
+    (_, i) => i % 10,
+  );
+
+  useEffect(() => {
+    if (!isInView) {
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId = null;
+
+    const animateReel = async () => {
+      controls.set({
+        y: 0,
+      });
+
+      await new Promise((resolve) => {
+        timeoutId = window.setTimeout(resolve, index * SLOT_DELAY_STEP);
+      });
+
+      if (cancelled) {
+        return;
+      }
+
+      await controls.start({
+        y: `-${targetIndex}em`,
+        transition: REEL_ANIMATION,
+      });
+    };
+
+    animateReel();
+
+    return () => {
+      cancelled = true;
+
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [isInView, controls, targetIndex, index]);
+
+  return (
+    <span
+      ref={containerRef}
       className="
-        pointer-events-none
-        absolute
-        z-0
-        rounded-full
-        bg-[#C9A66B]
+        relative
+        inline-block
+        h-[1em]
+        overflow-hidden
+        align-baseline
       "
       style={{
-        left,
-        top,
-        width: size,
-        height: size,
-        boxShadow: `
-          0 0 ${size * 2.5}px rgba(201,166,107,0.55),
-          0 0 ${size * 6}px rgba(201,166,107,0.18)
-        `,
+        minWidth: "0.58em",
       }}
-    />
+    >
+      <motion.span
+        animate={controls}
+        initial={{
+          y: 0,
+        }}
+        className="
+          flex
+          flex-col
+          will-change-transform
+        "
+      >
+        {reelDigits.map((number, reelIndex) => (
+          <span
+            key={`${reelIndex}-${number}`}
+            className="
+              flex
+              h-[1em]
+              shrink-0
+              items-center
+              justify-center
+            "
+          >
+            {number}
+          </span>
+        ))}
+      </motion.span>
+    </span>
+  );
+};
+
+const SlotNumber = ({ value }) => {
+  const characters = String(value ?? "").split("");
+
+  return (
+    <span
+      className="
+        inline-flex
+        items-center
+        justify-center
+        font-display
+        text-[clamp(70px,10vw,150px)]
+        font-medium
+        leading-none
+        tracking-[-0.08em]
+      "
+    >
+      {characters.map((character, index) => {
+        if (!/\d/.test(character)) {
+          return (
+            <span key={`${character}-${index}`} className="inline-block">
+              {character}
+            </span>
+          );
+        }
+
+        return (
+          <SlotDigit
+            key={`${character}-${index}`}
+            digit={character}
+            index={index}
+          />
+        );
+      })}
+    </span>
+  );
+};
+
+const StatCard = ({ stat }) => {
+  return (
+    <motion.article
+      initial="rest"
+      whileHover="hover"
+      whileTap="hover"
+      variants={{
+        rest: {
+          y: 0,
+        },
+        hover: {
+          y: -8,
+        },
+      }}
+      transition={{
+        duration: 0.35,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      className="
+        group
+        relative
+        isolate
+        flex
+        min-h-[340px]
+        w-full
+        flex-col
+        items-center
+        justify-center
+        overflow-hidden
+        rounded-[28px]
+        border
+        border-white/[0.12]
+        bg-white/[0.045]
+        px-6
+        py-10
+        text-center
+        backdrop-blur-[24px]
+        backdrop-saturate-[150%]
+        shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_20px_70px_rgba(0,0,0,0.22)]
+        transition-[border-color,background-color,box-shadow]
+        duration-500
+        hover:border-[#C9A66B]/45
+        hover:bg-white/[0.065]
+        hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_0_50px_rgba(201,166,107,0.17),0_30px_90px_rgba(0,0,0,0.35)]
+        touch-manipulation
+      "
+    >
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          inset-x-0
+          top-0
+          h-px
+          bg-gradient-to-r
+          from-transparent
+          via-white/25
+          to-transparent
+        "
+      />
+
+      <motion.div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          left-1/2
+          top-1/2
+          -z-10
+          h-40
+          w-40
+          -translate-x-1/2
+          -translate-y-1/2
+          rounded-full
+          bg-[#C9A66B]/[0.025]
+          blur-3xl
+        "
+        variants={{
+          rest: {
+            scale: 1,
+            opacity: 0.4,
+          },
+          hover: {
+            scale: 1.8,
+            opacity: 1,
+          },
+        }}
+        transition={{
+          duration: 0.7,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      />
+
+      <motion.div
+        className="
+          relative
+          z-10
+          flex
+          origin-center
+          items-center
+          justify-center
+          whitespace-nowrap
+        "
+        variants={{
+          rest: {
+            scale: 1,
+            rotate: 0,
+            color: "#F5F3EE",
+          },
+          hover: {
+            scale: 1.1,
+            rotate: -4,
+            color: "#C9A66B",
+          },
+        }}
+        transition={{
+          duration: 0.4,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      >
+        <SlotNumber value={stat.value} />
+
+        {stat.suffix && (
+          <motion.span
+            className="
+              relative
+              -top-[0.65em]
+              ml-2
+              font-display
+              text-[clamp(20px,3vw,38px)]
+              font-medium
+              leading-none
+              tracking-[-0.04em]
+            "
+            variants={{
+              rest: {
+                color: "#F5F3EE",
+              },
+              hover: {
+                color: "#C9A66B",
+              },
+            }}
+            transition={{
+              duration: 0.35,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            {stat.suffix}
+          </motion.span>
+        )}
+      </motion.div>
+
+      <motion.div
+        aria-hidden="true"
+        className="
+          relative
+          z-10
+          mt-9
+          h-px
+          bg-[#C9A66B]/40
+        "
+        variants={{
+          rest: {
+            width: 48,
+            opacity: 0.6,
+          },
+          hover: {
+            width: 80,
+            opacity: 1,
+          },
+        }}
+        transition={{
+          duration: 0.4,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      />
+
+      <motion.p
+        className="
+          relative
+          z-10
+          m-0
+          mt-7
+          max-w-[520px]
+          px-4
+          text-center
+          text-[11px]
+          font-medium
+          uppercase
+          leading-[1.8]
+          tracking-[0.25em]
+          sm:text-xs
+          lg:text-sm
+        "
+        variants={{
+          rest: {
+            color: "#A7A39B",
+          },
+          hover: {
+            color: "#D0CCC4",
+          },
+        }}
+        transition={{
+          duration: 0.5,
+        }}
+      >
+        {stat.label}
+      </motion.p>
+
+      <motion.div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          bottom-0
+          left-1/2
+          h-px
+          -translate-x-1/2
+          bg-[#C9A66B]
+          shadow-[0_0_18px_rgba(201,166,107,0.8)]
+        "
+        variants={{
+          rest: {
+            width: 0,
+          },
+          hover: {
+            width: "50%",
+          },
+        }}
+        transition={{
+          duration: 0.45,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      />
+    </motion.article>
   );
 };
 
 const StatsSection = () => {
-  const sectionRef = useRef(null);
-
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  /*
-   * =========================================
-   * SCROLL
-   * =========================================
-   */
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  /*
-   * =========================================
-   * SMOOTH SCROLL PROGRESS
-   * =========================================
-   *
-   * Everything that reacts to scrolling should
-   * use this same motion value.
-   *
-   * This prevents the active statistic from
-   * getting ahead of the actual visual animation.
-   */
-
-  const smoothScrollProgress = useSpring(scrollYProgress, SCROLL_SPRING);
-
-  /*
-   * =========================================
-   * LOAD STATS
-   * =========================================
-   */
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     const fetchStats = async () => {
       try {
-        setLoading(true);
-
-        const response = await fetch(`${api_url}/api/website/stats`);
+        const response = await fetch(STATS_ENDPOINT, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
-          throw new Error("Unable to load statistics.");
+          throw new Error(`Unable to load statistics: ${response.status}`);
         }
 
         const data = await response.json();
@@ -166,18 +612,19 @@ const StatsSection = () => {
           nextStats = data;
         }
 
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setStats(nextStats);
-          setActiveIndex(0);
         }
       } catch (error) {
-        console.error("Stats fetch error:", error);
+        if (error?.name !== "AbortError") {
+          console.error("Stats fetch error:", error);
+        }
 
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setStats([]);
         }
       } finally {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -186,927 +633,219 @@ const StatsSection = () => {
     fetchStats();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 
-  /*
-   * =========================================
-   * STAT SEQUENCE
-   * =========================================
-   *
-   * IMPORTANT:
-   *
-   * Use smoothScrollProgress instead of the raw
-   * scrollYProgress here.
-   *
-   * Previously the active stat reacted to the
-   * raw scroll position while the actual content
-   * reacted to the spring-smoothed position.
-   *
-   * That mismatch caused the sequence to feel
-   * inconsistent, especially during quick
-   * touch swipes.
-   */
-
-  useMotionValueEvent(smoothScrollProgress, "change", (progress) => {
-    if (!stats.length) {
-      return;
-    }
-
-    if (progress < SEQUENCE_START) {
-      if (activeIndex !== 0) {
-        setActiveIndex(0);
-      }
-
-      return;
-    }
-
-    if (progress >= SEQUENCE_END) {
-      const lastIndex = stats.length - 1;
-
-      if (activeIndex !== lastIndex) {
-        setActiveIndex(lastIndex);
-      }
-
-      return;
-    }
-
-    if (stats.length === 1) {
-      return;
-    }
-
-    const sequenceProgress =
-      (progress - SEQUENCE_START) / (SEQUENCE_END - SEQUENCE_START);
-
-    const remainingStats = stats.length - 1;
-
-    const nextIndex = Math.min(
-      stats.length - 1,
-      1 + Math.floor(sequenceProgress * remainingStats),
-    );
-
-    if (nextIndex !== activeIndex) {
-      setActiveIndex(nextIndex);
-    }
-  });
-
-  /*
-   * =========================================
-   * CONTENT ENTRANCE
-   * =========================================
-   */
-
-  const contentY = useTransform(
-    smoothScrollProgress,
-    [CONTENT_START, CONTENT_END],
-    [80, 0],
-  );
-
-  const contentScale = useTransform(
-    smoothScrollProgress,
-    [CONTENT_START, CONTENT_END],
-    [0.92, 1],
-  );
-
-  /*
-   * =========================================
-   * EXIT PROGRESS
-   * =========================================
-   *
-   * This now finishes at 0.86 rather than 1.
-   * Therefore the screen is already white before
-   * the sticky section releases.
-   */
-
-  const exitProgress = useTransform(
-    smoothScrollProgress,
-    [EXIT_START, EXIT_END],
-    [0, 1],
-  );
-
-  /*
-   * =========================================
-   * NUMBER CAMERA ZOOM
-   * =========================================
-   */
-
-  const numberScale = useTransform(
-    exitProgress,
-    [0, 0.035, 0.08, 0.14, 0.22, 0.34, 0.48, 0.62, 0.74, 0.84, 0.92, 1],
-    [1, 1.012, 1.035, 1.09, 1.2, 1.46, 2.0, 3.1, 4.9, 7.8, 13, 30],
-  );
-
-  /*
-   * =========================================
-   * NUMBER MICRO MOVEMENT
-   * =========================================
-   */
-
-  const numberY = useTransform(
-    exitProgress,
-    [0, 0.35, 0.58, 0.78, 1],
-    [0, 0, -0.3, -0.8, -1.2],
-  );
-
-  /*
-   * =========================================
-   * VECTOR VIEWBOX ZOOM
-   * =========================================
-   */
-
-  const numberViewBox = useTransform(numberScale, (scale) => {
-    const safeScale = Math.max(Number(scale) || 1, 1);
-
-    const width = 100 / safeScale;
-    const height = 100 / safeScale;
-
-    return `${NUMBER_FOCAL_X - width / 2} ${
-      NUMBER_FOCAL_Y - height / 2
-    } ${width} ${height}`;
-  });
-
-  /*
-   * =========================================
-   * SUFFIX SCALE
-   * =========================================
-   */
-
-  const suffixScale = useTransform(
-    exitProgress,
-    [0, 0.15, 0.3, 0.5, 0.7, 1],
-    [1, 1.02, 1.05, 1.12, 1.2, 1.35],
-  );
-
-  /*
-   * =========================================
-   * FINAL WHITE CAMERA OUT
-   * =========================================
-   *
-   * The white layer reaches full opacity
-   * before EXIT_END finishes, giving the next
-   * component no opportunity to peek through.
-   */
-
-  const whiteCameraOpacity = useTransform(
-    exitProgress,
-    [0.62, 0.72, 0.82, 0.92, 1],
-    [0, 0.12, 0.45, 0.82, 1],
-  );
-
-  /*
-   * =========================================
-   * COUNTERS
-   * =========================================
-   */
-
-  const currentNumber = String(activeIndex + 1).padStart(2, "0");
-
-  const totalNumber = String(stats.length).padStart(2, "0");
-
   return (
     <section
-      ref={sectionRef}
       className="
         relative
-        min-h-[520vh]
         w-full
-        sm:min-h-[650vh]
-        lg:min-h-[800vh]
+        overflow-hidden
         bg-[#080907]
+        px-5
+        py-24
+        sm:px-8
+        sm:py-32
+        lg:px-12
+        lg:py-40
       "
     >
-      {/* =====================================
-          STICKY 100VH VIEWPORT
-      ===================================== */}
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          overflow-hidden
+        "
+      >
+        <motion.div
+          className="
+            absolute
+            left-1/2
+            top-1/2
+            h-[420px]
+            w-[420px]
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+            bg-[#C9A66B]/[0.035]
+            blur-[120px]
+          "
+          animate={{
+            opacity: [0.5, 0.85, 0.5],
+            scale: [0.95, 1.08, 0.95],
+          }}
+          transition={{
+            duration: 7,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <StatIcon type="chart" left="8%" top="25%" size={42} />
+
+        <StatIcon type="growth" left="87%" top="17%" size={48} delay={1} />
+
+        <StatIcon type="bars" left="6%" top="82%" size={44} delay={1.8} />
+
+        <StatIcon type="percent" left="91%" top="73%" size={40} delay={2.4} />
+
+        <StatIcon type="target" left="48%" top="7%" size={34} delay={0.8} />
+      </div>
 
       <div
         className="
-          sticky
-          top-0
-          h-[100svh]
-          min-h-0
+          relative
+          z-10
+          mx-auto
           w-full
-          sm:h-[100dvh]
-          sm:min-h-[620px]
-          overflow-hidden
-          bg-[#080907]
+          max-w-[1400px]
         "
       >
-        {/* =====================================
-            GOLDEN BACKGROUND DOTS
-        ===================================== */}
-
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-0
-            overflow-hidden
-          "
-        >
-          <GoldDot
-            left="7%"
-            top="17%"
-            size={5}
-            duration={3.6}
-            delay={0}
-            opacity={[0.12, 0.5, 0.12]}
-            scale={[0.75, 1.35, 0.75]}
-          />
-
-          <GoldDot
-            left="16%"
-            top="72%"
-            size={4}
-            duration={4.2}
-            delay={0.8}
-            opacity={[0.1, 0.42, 0.1]}
-            scale={[0.7, 1.25, 0.7]}
-          />
-
-          <GoldDot
-            left="27%"
-            top="25%"
-            size={6}
-            duration={3.9}
-            delay={1.4}
-            opacity={[0.1, 0.48, 0.1]}
-            scale={[0.75, 1.4, 0.75]}
-          />
-
-          <GoldDot
-            left="38%"
-            top="82%"
-            size={4}
-            duration={4.5}
-            delay={0.5}
-            opacity={[0.08, 0.4, 0.08]}
-            scale={[0.7, 1.3, 0.7]}
-          />
-
-          <GoldDot
-            left="49%"
-            top="13%"
-            size={5}
-            duration={3.5}
-            delay={1.8}
-            opacity={[0.12, 0.52, 0.12]}
-            scale={[0.8, 1.4, 0.8]}
-          />
-
-          <GoldDot
-            left="61%"
-            top="76%"
-            size={6}
-            duration={4.1}
-            delay={0.7}
-            opacity={[0.1, 0.46, 0.1]}
-            scale={[0.75, 1.35, 0.75]}
-          />
-
-          <GoldDot
-            left="72%"
-            top="23%"
-            size={4}
-            duration={3.8}
-            delay={2}
-            opacity={[0.1, 0.45, 0.1]}
-            scale={[0.7, 1.3, 0.7]}
-          />
-
-          <GoldDot
-            left="83%"
-            top="65%"
-            size={6}
-            duration={4.4}
-            delay={1.1}
-            opacity={[0.1, 0.5, 0.1]}
-            scale={[0.75, 1.4, 0.75]}
-          />
-
-          <GoldDot
-            left="93%"
-            top="36%"
-            size={4}
-            duration={3.7}
-            delay={2.4}
-            opacity={[0.08, 0.42, 0.08]}
-            scale={[0.7, 1.25, 0.7]}
-          />
-
-          <GoldDot
-            left="11%"
-            top="44%"
-            size={3}
-            duration={4.6}
-            delay={1.6}
-            opacity={[0.08, 0.38, 0.08]}
-            scale={[0.7, 1.2, 0.7]}
-          />
-
-          <GoldDot
-            left="89%"
-            top="86%"
-            size={5}
-            duration={4}
-            delay={0.3}
-            opacity={[0.1, 0.45, 0.1]}
-            scale={[0.75, 1.35, 0.75]}
-          />
-        </div>
-
-        {/* =====================================
-            CENTER LINE
-        ===================================== */}
-
         <div
           className="
-            pointer-events-none
-            absolute
-            bottom-0
-            left-1/2
-            top-0
-            z-[1]
-            w-px
-            -translate-x-1/2
-            bg-[#292722]/40
-          "
-        />
-
-        {/* =====================================
-            FINAL WHITE CAMERA OUT
-        ===================================== */}
-
-        <motion.div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[60]
-            bg-white
-            will-change-[opacity]
-          "
-          style={{
-            opacity: whiteCameraOpacity,
-          }}
-        />
-
-        {/* =====================================
-            TOP FRAME
-        ===================================== */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            left-5
-            right-5
-            top-6
-            z-40
+            mb-16
             flex
-            items-center
-            justify-between
-            sm:left-8
-            sm:right-8
-            lg:left-12
-            lg:right-12
-          "
-        >
-          <span
-            className="
-              text-[8px]
-              font-medium
-              uppercase
-              tracking-[0.26em]
-              text-[#68665F]
-            "
-          >
-            Being IBAN Digital
-          </span>
-
-          <span
-            className="
-              text-[8px]
-              font-medium
-              uppercase
-              tracking-[0.26em]
-              text-[#68665F]
-            "
-          >
-            Impact / Scale
-          </span>
-        </div>
-
-        {/* =====================================
-            MAIN CONTENT
-        ===================================== */}
-
-        <motion.div
-          style={{
-            y: contentY,
-            scale: contentScale,
-          }}
-          className="
-            absolute
-            inset-0
-            z-10
-            flex
-            w-full
-            flex-col
             items-center
             justify-center
-            text-center
-            will-change-transform
-            transform-gpu
+            gap-4
+            sm:mb-20
+            sm:gap-5
           "
         >
-          {/* ===================================
-              EYEBROW
-          =================================== */}
-
-          <div
+          <span
             className="
-              absolute
-              left-1/2
-              top-[11%]
-              flex
-              -translate-x-1/2
-              items-center
-              justify-center
-              gap-4
-              sm:gap-5
+              h-px
+              w-9
+              bg-[#C9A66B]
+              sm:w-12
+            "
+          />
+
+          <span
+            className="
+              whitespace-nowrap
+              text-[10px]
+              font-medium
+              uppercase
+              tracking-[0.32em]
+              text-[#C9A66B]
+              sm:text-[11px]
             "
           >
-            <span
+            The Numbers
+          </span>
+
+          <span
+            className="
+              h-px
+              w-9
+              bg-[#C9A66B]
+              sm:w-12
+            "
+          />
+        </div>
+
+        {loading ? (
+          <div
+            className="
+              flex
+              min-h-[300px]
+              items-center
+              justify-center
+            "
+          >
+            <motion.div
+              animate={{
+                scaleX: [0.65, 1, 0.65],
+                opacity: [0.4, 1, 0.4],
+              }}
+              transition={{
+                duration: 1.4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
               className="
                 h-px
-                w-9
+                w-20
+                origin-center
                 bg-[#C9A66B]
-                sm:w-12
-              "
-            />
-
-            <span
-              className="
-                whitespace-nowrap
-                text-[10px]
-                font-medium
-                uppercase
-                tracking-[0.32em]
-                text-[#C9A66B]
-                sm:text-[11px]
-              "
-            >
-              The Numbers
-            </span>
-
-            <span
-              className="
-                h-px
-                w-9
-                bg-[#C9A66B]
-                sm:w-12
+                shadow-[0_0_14px_rgba(201,166,107,0.7)]
               "
             />
           </div>
-
-          {/* ===================================
-              STAT AREA
-          =================================== */}
-
-          {loading ? (
+        ) : stats.length > 0 ? (
+          <>
             <div
               className="
+                grid
+                grid-cols-1
+                gap-5
+                sm:grid-cols-2
+                sm:gap-6
+                lg:grid-cols-3
+                lg:gap-7
+              "
+            >
+              {stats.map((stat, index) => (
+                <StatCard
+                  key={
+                    stat?._id || stat?.id || `${stat?.label || "stat"}-${index}`
+                  }
+                  stat={stat}
+                />
+              ))}
+            </div>
+
+            <div
+              className="
+                mt-14
                 flex
-                h-full
-                min-h-0
-                w-full
                 items-center
                 justify-center
-              "
-            >
-              <div
-                className="
-                  h-px
-                  w-20
-                  bg-[#C9A66B]
-                "
-              />
-            </div>
-          ) : stats.length > 0 ? (
-            <div
-              className="
-                relative
-                h-full
-                min-h-0
-                w-full
-                overflow-hidden
-              "
-            >
-              {/* =================================
-                  STAT CROSSFADE TRACK
-              ================================= */}
-
-              <div
-                className="
-                  absolute
-                  inset-0
-                "
-              >
-                {stats.map((stat, index) => {
-                  const isActive = index === activeIndex;
-
-                  return (
-                    <motion.div
-                      key={stat._id || stat.id || index}
-                      initial={false}
-                      animate={{
-                        opacity: isActive ? 1 : 0,
-                        y: isActive ? 0 : index < activeIndex ? "-5vh" : "5vh",
-                        scale: isActive ? 1 : 0.985,
-                      }}
-                      transition={{
-                        opacity: {
-                          duration: 0.7,
-                          ease: [0.16, 1, 0.3, 1],
-                        },
-                        y: {
-                          duration: 0.85,
-                          ease: [0.16, 1, 0.3, 1],
-                        },
-                        scale: {
-                          duration: 0.85,
-                          ease: [0.16, 1, 0.3, 1],
-                        },
-                      }}
-                      className="
-                        absolute
-                        inset-0
-                        flex
-                        h-full
-                        w-full
-                        flex-col
-                        items-center
-                        justify-center
-                        will-change-transform
-                        transform-gpu
-                      "
-                      style={{
-                        visibility: isActive ? "visible" : "hidden",
-                        pointerEvents: isActive ? "auto" : "none",
-                      }}
-                    >
-                      {/* =========================
-                          STAT CONTENT
-                      ========================= */}
-
-                      <div
-                        className="
-                          relative
-                          z-10
-                          flex
-                          flex-col
-                          items-center
-                          justify-center
-                        "
-                      >
-                        {/* =================================
-                              NUMBER + SUFFIX
-                        ================================= */}
-
-                        <div
-                          className="
-                            relative
-                            flex
-                            items-center
-                            justify-center
-                            whitespace-nowrap
-                          "
-                        >
-                          {/* =================================
-                                ORIGINAL NUMBER
-                          ================================= */}
-
-                          <motion.div
-                            className="
-                              pointer-events-none
-                              relative
-                              z-50
-                              h-[clamp(130px,32vh,400px)]
-                              w-[clamp(150px,58vw,430px)]
-                              sm:h-[clamp(170px,40vh,420px)]
-                              sm:w-[clamp(190px,34vw,430px)]
-                              overflow-visible
-                              isolate
-                              will-change-transform
-                              transform-gpu
-                            "
-                            style={
-                              isActive
-                                ? {
-                                    x: 0,
-                                    y: numberY,
-                                  }
-                                : undefined
-                            }
-                          >
-                            <motion.svg
-                              viewBox={numberViewBox}
-                              preserveAspectRatio="xMidYMid meet"
-                              className="
-                                h-full
-                                w-full
-                                overflow-visible
-                              "
-                              style={{
-                                transform: "none",
-                              }}
-                              aria-hidden="true"
-                            >
-                              <text
-                                x={NUMBER_FOCAL_X}
-                                y={NUMBER_FOCAL_Y}
-                                textAnchor="middle"
-                                dominantBaseline="central"
-                                fill="#F5F3EE"
-                                fontFamily='\"Google Sans Flex\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif'
-                                fontSize="46"
-                                fontWeight="500"
-                                letterSpacing="-2"
-                                style={{
-                                  shapeRendering: "geometricPrecision",
-                                  textRendering: "geometricPrecision",
-                                }}
-                              >
-                                {String(stat.value)}
-                              </text>
-                            </motion.svg>
-                          </motion.div>
-
-                          {/* =================================
-                                SUFFIX
-                          ================================= */}
-
-                          {stat.suffix && (
-                            <motion.span
-                              style={
-                                isActive
-                                  ? {
-                                      scale: suffixScale,
-                                      y: "-50%",
-                                      transformOrigin: "left center",
-                                    }
-                                  : undefined
-                              }
-                              className="
-                                pointer-events-none
-                                absolute
-                                left-full
-                                top-1/2
-                                z-20
-                                ml-2
-                                font-display
-                                text-[clamp(30px,9vw,75px)]
-                                font-medium
-                                leading-none
-                                tracking-[-0.06em]
-                                text-[#C9A66B]
-                                sm:ml-5
-                                will-change-transform
-                                transform-gpu
-                              "
-                            >
-                              {stat.suffix}
-                            </motion.span>
-                          )}
-                        </div>
-
-                        {/* =================================
-                              DESCRIPTION
-                        ================================= */}
-
-                        <p
-                          className="
-                            relative
-                            z-20
-                            m-0
-                            mt-10
-                            max-w-[760px]
-                            px-5
-                            text-center
-                            text-[11px]
-                            font-medium
-                            uppercase
-                            leading-[1.8]
-                            tracking-[0.28em]
-                            text-[#A7A39B]
-                            sm:mt-12
-                            sm:text-xs
-                            lg:text-sm
-                          "
-                        >
-                          {stat.label}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div
-              className="
-                flex
-                h-full
-                min-h-0
-                items-center
-                justify-center
-              "
-            >
-              <p
-                className="
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.26em]
-                  text-[#68665F]
-                "
-              >
-                No statistics available
-              </p>
-            </div>
-          )}
-
-          {/* ===================================
-              BOTTOM COUNTER
-          =================================== */}
-
-          {stats.length > 1 && (
-            <div
-              className="
-                absolute
-                bottom-[12%]
-                left-1/2
-                flex
-                -translate-x-1/2
-                items-center
                 gap-4
+                sm:mt-20
                 sm:gap-5
               "
             >
               <span
                 className="
-                  font-display
-                  text-xl
+                  text-[8px]
                   font-medium
-                  tracking-[-0.04em]
-                  text-[#C9A66B]
-                  sm:text-2xl
-                "
-              >
-                {currentNumber}
-              </span>
-
-              <span
-                className="
-                  h-px
-                  w-10
-                  bg-[#292722]
-                  sm:w-14
-                "
-              />
-
-              <span
-                className="
-                  font-display
-                  text-xl
-                  font-medium
-                  tracking-[-0.04em]
+                  uppercase
+                  tracking-[0.24em]
                   text-[#68665F]
-                  sm:text-2xl
                 "
               >
-                {totalNumber}
+                Results that speak
               </span>
             </div>
-          )}
-        </motion.div>
-
-        {/* =====================================
-            RIGHT SIDE INDEX
-        ===================================== */}
-
-        {stats.length > 1 && (
+          </>
+        ) : (
           <div
             className="
-              absolute
-              right-8
-              top-1/2
-              z-40
-              hidden
-              -translate-y-1/2
-              flex-col
-              items-end
-              gap-5
-              md:flex
-              lg:right-12
+              flex
+              min-h-[300px]
+              items-center
+              justify-center
             "
           >
-            {stats.map((stat, index) => {
-              const isActive = index === activeIndex;
-
-              return (
-                <div
-                  key={stat._id || stat.id || index}
-                  className="
-                    flex
-                    items-center
-                    gap-3
-                  "
-                >
-                  <span
-                    className="
-                      text-[9px]
-                      font-medium
-                      tracking-[0.2em]
-                      text-[#C9A66B]
-                    "
-                    style={{
-                      opacity: isActive ? 1 : 0.25,
-                    }}
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-
-                  <span
-                    className="
-                      h-px
-                      bg-[#C9A66B]
-                      transition-all
-                      duration-700
-                      ease-[cubic-bezier(0.22,1,0.36,1)]
-                    "
-                    style={{
-                      width: isActive ? 26 : 7,
-                      opacity: isActive ? 1 : 0.2,
-                    }}
-                  />
-                </div>
-              );
-            })}
+            <p
+              className="
+                text-[10px]
+                font-medium
+                uppercase
+                tracking-[0.26em]
+                text-[#68665F]
+              "
+            >
+              No statistics available
+            </p>
           </div>
         )}
-
-        {/* =====================================
-            BOTTOM FRAME
-        ===================================== */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            bottom-6
-            left-5
-            right-5
-            z-40
-            hidden
-            items-center
-            justify-between
-            sm:flex
-            sm:left-8
-            sm:right-8
-            lg:left-12
-            lg:right-12
-          "
-        >
-          <span
-            className="
-              text-[8px]
-              font-medium
-              uppercase
-              tracking-[0.24em]
-              text-[#4F4D48]
-            "
-          >
-            Results that speak
-          </span>
-
-          <span
-            className="
-              text-[8px]
-              font-medium
-              uppercase
-              tracking-[0.24em]
-              text-[#4F4D48]
-            "
-          >
-            Scroll / 01—{totalNumber}
-          </span>
-        </div>
       </div>
     </section>
   );

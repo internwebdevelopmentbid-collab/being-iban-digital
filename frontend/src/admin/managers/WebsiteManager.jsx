@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
 import AdminSidebar from "../components/AdminSidebar";
 import AdminTopbar from "../components/AdminTopbar";
-
 import { adminFetch, getStoredAdmin } from "../utils/adminAPI";
-
 // =====================================================
 // WEBSITE MANAGER CONFIG
 // =====================================================
-
 const tabs = {
   stats: {
     label: "Stats",
@@ -41,7 +37,6 @@ const tabs = {
       },
     ],
   },
-
   services: {
     label: "Services",
     type: "services",
@@ -78,7 +73,6 @@ const tabs = {
       },
     ],
   },
-
   tech: {
     label: "Tech",
     type: "techCapabilities",
@@ -108,7 +102,6 @@ const tabs = {
       },
     ],
   },
-
   brands: {
     label: "Brands",
     type: "brands",
@@ -133,7 +126,7 @@ const tabs = {
         name: "websiteUrl",
         label: "Website URL",
         type: "url",
-        placeholder: "https://...",
+        placeholder: "https\://...",
       },
       {
         name: "isFeatured",
@@ -142,7 +135,6 @@ const tabs = {
       },
     ],
   },
-
   reviews: {
     label: "Reviews",
     type: "reviews",
@@ -179,136 +171,133 @@ const tabs = {
       },
     ],
   },
+  howWeHelp: {
+    label: "How We Help",
+    type: "howWeHelp",
+    eyebrow: "WEBSITE / HOW WE HELP",
+    title: "How We Help",
+    description:
+      "Manage client case studies, business needs, BID approaches, and results.",
+    fields: [],
+  },
 };
 
 // =====================================================
 // EMPTY FORM
 // =====================================================
-
 const emptyForm = {
   // Stats
   label: "",
   value: "",
   suffix: "",
-
   // Services
   title: "",
   shortDescription: "",
   icon: null,
   iconUrl: "",
   features: [""],
-
   // Tech
   line1: false,
   line2: false,
-
   // Brands
   name: "",
   logoUrl: "",
   logo: null,
   websiteUrl: "",
   isFeatured: false,
-
   // Reviews
   rating: 5,
   review: "",
-};
 
+  // How We Help
+  clientName: "",
+  howWeHelpLogo: null,
+  businessNeeds: [""],
+  bidApproach: [""],
+  resultMetric: "",
+  isActive: true,
+  sortOrder: 0,
+};
 // =====================================================
 // DISPLAY HELPERS
 // =====================================================
-
 const getDisplayTitle = (item, type) => {
   if (!item) {
     return "Untitled";
   }
-
   if (type === "stats") {
     return item.label || "Untitled Statistic";
   }
-
   if (type === "reviews") {
     return item.name || "Untitled Review";
   }
-
+  if (type === "howWeHelp") {
+    return item.clientName || "Untitled Client";
+  }
   return item.title || item.name || "Untitled";
 };
-
 const getDisplaySubtitle = (item, type) => {
   if (!item) {
     return "";
   }
-
   if (type === "stats") {
     return `${item.value || ""}${item.suffix || ""}`;
   }
-
   if (type === "reviews") {
     return item.rating ? `${item.rating}/5` : "";
   }
-
   if (type === "services") {
     return item.shortDescription || "";
   }
-
   if (type === "techCapabilities") {
     if (item.line1) {
       return "Line 1";
     }
-
     if (item.line2) {
       return "Line 2";
     }
-
     return "";
   }
-
   if (type === "brands") {
     return item.websiteUrl || "";
   }
-
+  if (type === "howWeHelp") {
+    return item.resultMetric || "No result metric added";
+  }
   return "";
 };
-
 // =====================================================
 // RESPONSE NORMALIZER
 // =====================================================
-
 const normalizeItems = (data, type) => {
   if (!data) {
     return [];
   }
-
   if (Array.isArray(data)) {
     return data;
   }
-
   if (type === "reviews" && Array.isArray(data.reviews)) {
     return data.reviews;
   }
-
+  if (type === "howWeHelp" && Array.isArray(data.entries)) {
+    return data.entries;
+  }
   if (Array.isArray(data.data)) {
     return data.data;
   }
-
   if (Array.isArray(data.items)) {
     return data.items;
   }
-
   if (Array.isArray(data[type])) {
     return data[type];
   }
-
   return [];
 };
-
 // =====================================================
 // PAYLOAD PREPARATION
 // =====================================================
-
 const preparePayload = (form, fields) => {
   const payload = {};
-
   fields.forEach((field) => {
     if (
       field.type === "file" ||
@@ -317,9 +306,7 @@ const preparePayload = (form, fields) => {
     ) {
       return;
     }
-
     let value = form[field.name];
-
     if (field.type === "number") {
       if (value === "" || value === null || value === undefined) {
         value = 0;
@@ -327,44 +314,33 @@ const preparePayload = (form, fields) => {
         value = Number(value);
       }
     }
-
     if (field.type === "toggle") {
       value = Boolean(value);
     }
-
     payload[field.name] = value;
   });
-
   return payload;
 };
-
 // =====================================================
 // FORM VALUE FORMATTER
 // =====================================================
-
 const formatValueForForm = (value, field) => {
   if (field.name === "features" && Array.isArray(value)) {
     return value.length ? value : [""];
   }
-
   if (value === null || value === undefined) {
     if (field.type === "toggle") {
       return false;
     }
-
     return "";
   }
-
   return value;
 };
-
 // =====================================================
 // TOGGLE FIELD
 // =====================================================
-
 function ToggleField({ value, onChange, label }) {
   const enabled = Boolean(value);
-
   return (
     <div className="rounded-xl border border-[#292722] bg-[#0c0d0b] p-4">
       <div className="flex items-center justify-between gap-4">
@@ -372,7 +348,6 @@ function ToggleField({ value, onChange, label }) {
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
             {label}
           </p>
-
           <p
             className={`mt-1 text-xs ${
               enabled ? "text-[#c9a66b]" : "text-[#68665f]"
@@ -383,7 +358,6 @@ function ToggleField({ value, onChange, label }) {
               : "This content will not be marked as featured."}
           </p>
         </div>
-
         <button
           type="button"
           role="switch"
@@ -400,7 +374,6 @@ function ToggleField({ value, onChange, label }) {
               enabled ? "left-[31px] bg-[#080907]" : "left-[3px] bg-[#68665f]"
             }`}
           />
-
           <span className="sr-only">
             {enabled ? "Featured enabled" : "Featured disabled"}
           </span>
@@ -409,25 +382,20 @@ function ToggleField({ value, onChange, label }) {
     </div>
   );
 }
-
 // =====================================================
 // TECH LINE FIELD
 // =====================================================
-
 function TechLineField({ line1, line2, onChange }) {
   const selectedLine = line1 ? "line1" : line2 ? "line2" : "";
-
   const selectLine = (line) => {
     if (line === "line1") {
       onChange("line1", true);
       onChange("line2", false);
       return;
     }
-
     onChange("line1", false);
     onChange("line2", true);
   };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -435,12 +403,10 @@ function TechLineField({ line1, line2, onChange }) {
           Display Line
           <span className="ml-1 text-[#c9a66b]">*</span>
         </label>
-
         <span className="text-[9px] uppercase tracking-[0.12em] text-[#68665f]">
           Choose one
         </span>
       </div>
-
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
@@ -459,7 +425,6 @@ function TechLineField({ line1, line2, onChange }) {
             >
               Line 1
             </span>
-
             <span
               className={`flex h-5 w-5 items-center justify-center rounded-full border ${
                 selectedLine === "line1"
@@ -472,12 +437,10 @@ function TechLineField({ line1, line2, onChange }) {
               )}
             </span>
           </div>
-
           <p className="mt-2 text-[10px] leading-5 text-[#68665f]">
             Show this technology on the first technology line.
           </p>
         </button>
-
         <button
           type="button"
           onClick={() => selectLine("line2")}
@@ -495,7 +458,6 @@ function TechLineField({ line1, line2, onChange }) {
             >
               Line 2
             </span>
-
             <span
               className={`flex h-5 w-5 items-center justify-center rounded-full border ${
                 selectedLine === "line2"
@@ -508,51 +470,40 @@ function TechLineField({ line1, line2, onChange }) {
               )}
             </span>
           </div>
-
           <p className="mt-2 text-[10px] leading-5 text-[#68665f]">
             Show this technology on the second technology line.
           </p>
         </button>
       </div>
-
       {!selectedLine && (
         <p className="text-[10px] text-[#c9a66b]">Select Line 1 or Line 2.</p>
       )}
     </div>
   );
 }
-
 // =====================================================
 // FEATURE FIELDS
 // =====================================================
-
 function FeatureFields({ value, onChange }) {
   const features = Array.isArray(value) && value.length ? value : [""];
-
   const updateFeature = (index, nextValue) => {
     const nextFeatures = [...features];
-
     nextFeatures[index] = nextValue;
-
     onChange("features", nextFeatures);
   };
-
   const addFeature = () => {
     onChange("features", [...features, ""]);
   };
-
   const removeFeature = (index) => {
     if (features.length === 1) {
       onChange("features", [""]);
       return;
     }
-
     onChange(
       "features",
       features.filter((_, featureIndex) => featureIndex !== index),
     );
   };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -560,19 +511,16 @@ function FeatureFields({ value, onChange }) {
           Features
           <span className="ml-1 text-[#c9a66b]">*</span>
         </label>
-
         <span className="text-[9px] uppercase tracking-[0.12em] text-[#68665f]">
           Add one by one
         </span>
       </div>
-
       <div className="space-y-2">
         {features.map((feature, index) => (
           <div key={index} className="flex items-center gap-2">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#292722] bg-[#11120f] text-xs text-[#c9a66b]">
               {String(index + 1).padStart(2, "0")}
             </div>
-
             <input
               value={feature}
               required
@@ -580,7 +528,6 @@ function FeatureFields({ value, onChange }) {
               onChange={(event) => updateFeature(index, event.target.value)}
               className="min-w-0 flex-1 rounded-xl border border-[#292722] bg-[#0c0d0b] px-4 py-3 text-sm text-[#f5f3ee] outline-none transition placeholder:text-[#68665f] focus:border-[#c9a66b]"
             />
-
             <button
               type="button"
               onClick={() => removeFeature(index)}
@@ -593,7 +540,6 @@ function FeatureFields({ value, onChange }) {
           </div>
         ))}
       </div>
-
       <button
         type="button"
         onClick={addFeature}
@@ -604,16 +550,13 @@ function FeatureFields({ value, onChange }) {
     </div>
   );
 }
-
 // =====================================================
 // INPUT FIELD
 // =====================================================
-
 function InputField({ field, value, onChange, existingImageUrl = "" }) {
   if (field.type === "features") {
     return <FeatureFields value={value} onChange={onChange} />;
   }
-
   if (field.type === "techLine") {
     return (
       <TechLineField
@@ -623,7 +566,6 @@ function InputField({ field, value, onChange, existingImageUrl = "" }) {
       />
     );
   }
-
   if (field.type === "toggle") {
     return (
       <ToggleField
@@ -633,16 +575,13 @@ function InputField({ field, value, onChange, existingImageUrl = "" }) {
       />
     );
   }
-
   if (field.type === "file") {
     const selectedFileName = value?.name || "";
-
     return (
       <div className="min-w-0 space-y-2">
         <label className="block text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
           {field.label}
         </label>
-
         {existingImageUrl && (
           <div className="mb-3 flex min-w-0 items-center gap-4 rounded-xl border border-[#292722] bg-[#0c0d0b] p-3">
             <div className="flex h-16 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#292722] bg-[#11120f] p-2">
@@ -652,19 +591,16 @@ function InputField({ field, value, onChange, existingImageUrl = "" }) {
                 className="max-h-full max-w-full object-contain"
               />
             </div>
-
             <div className="min-w-0 flex-1">
               <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#68665f]">
                 Current {field.label}
               </p>
-
               <p className="mt-1 truncate text-xs text-[#a7a39b]">
                 Upload a new image to replace it.
               </p>
             </div>
           </div>
         )}
-
         <label
           className="
             group
@@ -705,11 +641,9 @@ function InputField({ field, value, onChange, existingImageUrl = "" }) {
           >
             {selectedFileName || `Choose ${field.label}`}
           </span>
-
           <span className="mt-2 text-[10px] uppercase tracking-[0.08em] text-[#68665f]">
             PNG, JPG, WEBP or SVG
           </span>
-
           <input
             type="file"
             accept={field.accept || "image/*"}
@@ -722,7 +656,6 @@ function InputField({ field, value, onChange, existingImageUrl = "" }) {
       </div>
     );
   }
-
   const commonProps = {
     value: value ?? "",
     required: field.required,
@@ -731,15 +664,12 @@ function InputField({ field, value, onChange, existingImageUrl = "" }) {
     className:
       "w-full rounded-xl border border-[#292722] bg-[#0c0d0b] px-4 py-3 text-sm text-[#f5f3ee] outline-none transition placeholder:text-[#68665f] focus:border-[#c9a66b]",
   };
-
   return (
     <div className="space-y-2">
       <label className="block text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
         {field.label}
-
         {field.required && <span className="ml-1 text-[#c9a66b]">*</span>}
       </label>
-
       {field.type === "textarea" ? (
         <textarea
           {...commonProps}
@@ -758,259 +688,364 @@ function InputField({ field, value, onChange, existingImageUrl = "" }) {
     </div>
   );
 }
+function HowWeHelpForm({ form, onChange }) {
+  const inputClass =
+    "w-full rounded-xl border border-[#292722] bg-[#0c0d0b] px-4 py-3 text-sm text-[#f5f3ee] outline-none placeholder:text-[#68665f] focus:border-[#c9a66b]";
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  useEffect(() => {
+    if (!form.howWeHelpLogo) {
+      setPreviewUrl("");
+      return undefined;
+    }
+    const objectUrl = URL.createObjectURL(form.howWeHelpLogo);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [form.howWeHelpLogo]);
+
+  const updateList = (field, index, value) => {
+    const next = [...(form[field] || [""])];
+    next[index] = value;
+    onChange(field, next);
+  };
+  const addListItem = (field) => onChange(field, [...(form[field] || []), ""]);
+  const removeListItem = (field, index) => {
+    const next = (form[field] || []).filter((_, i) => i !== index);
+    onChange(field, next.length ? next : [""]);
+  };
+  const renderBulletList = (field, label) => (
+    <div className="space-y-3">
+      <label className="block text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
+        {label} <span className="text-[#c9a66b]">*</span>
+      </label>
+      {(form[field] || [""]).map((item, index) => (
+        <div key={`${field}-${index}`} className="flex gap-2">
+          <input
+            required
+            value={item}
+            onChange={(event) => updateList(field, index, event.target.value)}
+            placeholder={`${label} item ${index + 1}`}
+            className={inputClass}
+          />
+          <button
+            type="button"
+            onClick={() => removeListItem(field, index)}
+            className="shrink-0 border border-[#292722] px-3 text-[#a7a39b] hover:border-red-900 hover:text-red-400"
+            aria-label={`Remove ${label} item ${index + 1}`}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => addListItem(field)}
+        className="w-full rounded-xl border border-dashed border-[#c9a66b] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#c9a66b] hover:bg-[#11120f]"
+      >
+        + Add bullet point
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <label className="block text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
+          Client Name <span className="text-[#c9a66b]">*</span>
+        </label>
+        <input
+          required
+          value={form.clientName || ""}
+          onChange={(event) => onChange("clientName", event.target.value)}
+          placeholder="AF Chinar Park"
+          className={inputClass}
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="block text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
+          Client Logo <span className="text-[#c9a66b]">*</span>
+        </label>
+        {previewUrl || form.logoUrl ? (
+          <div className="flex min-h-28 items-center justify-center border border-[#292722] bg-white p-4">
+            <img
+              src={previewUrl || form.logoUrl}
+              alt="Client logo preview"
+              className="max-h-24 max-w-full object-contain"
+            />
+          </div>
+        ) : null}
+        <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#c9a66b] bg-[#0c0d0b] px-4 py-5 text-center transition hover:bg-[#11120f]">
+          <span className="text-xs font-medium text-[#f5f3ee]">
+            {form.howWeHelpLogo
+              ? "Choose a different logo"
+              : form.logoUrl
+                ? "Upload a replacement logo"
+                : "Choose client logo"}
+          </span>
+          <span className="mt-2 text-[10px] uppercase tracking-[0.08em] text-[#68665f]">
+            PNG, JPG, WEBP or SVG · Max 5 MB
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(event) =>
+              onChange("howWeHelpLogo", event.target.files?.[0] || null)
+            }
+            className="hidden"
+          />
+        </label>
+        {form.howWeHelpLogo && (
+          <button
+            type="button"
+            onClick={() => onChange("howWeHelpLogo", null)}
+            className="text-xs text-[#c9a66b] hover:text-[#f5f3ee]"
+          >
+            Clear selected file
+          </button>
+        )}
+      </div>
+      {renderBulletList("businessNeeds", "Business Needs")}
+      {renderBulletList("bidApproach", "The BID Approach")}
+      <div className="space-y-2">
+        <label className="block text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
+          Result Metric
+        </label>
+        <input
+          value={form.resultMetric || ""}
+          onChange={(event) => onChange("resultMetric", event.target.value)}
+          placeholder="22k+ ORGANIC VIEWS IN 2 MONTHS"
+          className={inputClass}
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="block text-xs font-medium uppercase tracking-[0.16em] text-[#a7a39b]">
+          Sort Order
+        </label>
+        <input
+          type="number"
+          min="0"
+          value={form.sortOrder ?? 0}
+          onChange={(event) =>
+            onChange(
+              "sortOrder",
+              event.target.value === "" ? 0 : Number(event.target.value),
+            )
+          }
+          className={inputClass}
+        />
+      </div>
+      <label className="flex items-center gap-3 text-sm text-[#a7a39b]">
+        <input
+          type="checkbox"
+          checked={Boolean(form.isActive)}
+          onChange={(event) => onChange("isActive", event.target.checked)}
+          className="accent-[#c9a66b]"
+        />
+        Show this entry on the public website
+      </label>
+    </div>
+  );
+}
 
 // =====================================================
 // WEBSITE MANAGER
 // =====================================================
-
 export default function WebsiteManager() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const admin = getStoredAdmin();
-
   const [activeTab, setActiveTab] = useState("stats");
-
   const [items, setItems] = useState([]);
-
   const [loading, setLoading] = useState(false);
-
   const [saving, setSaving] = useState(false);
-
   const [deletingId, setDeletingId] = useState("");
-
   const [togglingFeaturedId, setTogglingFeaturedId] = useState("");
-
   const [editingId, setEditingId] = useState(null);
-
   const [form, setForm] = useState(emptyForm);
-
   const [search, setSearch] = useState("");
-
   const config = tabs[activeTab];
-
   const isEditing = Boolean(editingId);
-
   const supportsFeatured = activeTab === "brands";
-
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
-
     if (!query) {
       return items;
     }
-
     return items.filter((item) =>
       JSON.stringify(item).toLowerCase().includes(query),
     );
   }, [items, search]);
-
   // ===================================================
   // LOAD ITEMS
   // ===================================================
-
   const loadItems = useCallback(
     async ({ silent = false } = {}) => {
       try {
         if (!silent) {
           setLoading(true);
         }
-
-        const data = await adminFetch(`/website/admin/${config.type}`);
-
+        const data =
+          activeTab === "howWeHelp"
+            ? await adminFetch("/how-we-help/admin/all")
+            : await adminFetch(`/website/admin/${config.type}`);
         setItems(normalizeItems(data, config.type));
       } catch (error) {
         console.error("Load website manager data error:", error);
-
         if (error?.status !== 401) {
           toast.error(
             error?.message || `Unable to load ${config.label.toLowerCase()}.`,
           );
         }
-
         setItems([]);
       } finally {
         setLoading(false);
       }
     },
-    [config],
+    [config, activeTab],
   );
-
   useEffect(() => {
     setEditingId(null);
     setForm(emptyForm);
     setSearch("");
-
     loadItems();
   }, [activeTab, loadItems]);
-
   // ===================================================
   // FIELD CHANGE
   // ===================================================
-
   const handleFieldChange = (name, value) => {
     setForm((previous) => ({
       ...previous,
       [name]: value,
     }));
   };
-
   // ===================================================
   // EDIT
   // ===================================================
-
   const handleEdit = (item) => {
-    const nextForm = {
-      ...emptyForm,
-    };
-
+    if (config.type === "howWeHelp") {
+      setEditingId(item._id || item.id || null);
+      setForm({
+        ...emptyForm,
+        clientName: item.clientName || "",
+        logoUrl: item.logoUrl || "",
+        howWeHelpLogo: null,
+        businessNeeds: item.businessNeeds?.length
+          ? [...item.businessNeeds]
+          : [""],
+        bidApproach: item.bidApproach?.length ? [...item.bidApproach] : [""],
+        resultMetric: item.resultMetric || "",
+        isActive: item.isActive ?? true,
+        sortOrder: item.sortOrder ?? 0,
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const nextForm = { ...emptyForm };
     config.fields.forEach((field) => {
       if (field.type === "file") {
         nextForm[field.name] = null;
         return;
       }
-
       if (field.type === "techLine") {
         return;
       }
-
       nextForm[field.name] = formatValueForForm(item[field.name], field);
     });
-
     // -----------------------------------------------
     // TECH
     // -----------------------------------------------
-
     if (config.type === "techCapabilities") {
       nextForm.title = item.title || "";
-
       nextForm.icon = null;
-
       nextForm.iconUrl = item.icon || "";
-
       nextForm.line1 = Boolean(item.line1);
-
       nextForm.line2 = Boolean(item.line2);
     }
-
     // -----------------------------------------------
     // BRANDS
     // -----------------------------------------------
-
     if (config.type === "brands") {
       nextForm.logoUrl = item.logoUrl || "";
     }
-
     // -----------------------------------------------
     // SERVICES
     // -----------------------------------------------
-
     if (config.type === "services") {
       nextForm.icon = null;
-
       nextForm.iconUrl = item.icon || "";
-
       nextForm.features =
         Array.isArray(item.features) && item.features.length
           ? item.features
           : [""];
     }
-
     // -----------------------------------------------
     // REVIEWS
     // -----------------------------------------------
-
     if (config.type === "reviews") {
       nextForm.name = item.name || "";
-
       nextForm.logo = null;
-
       nextForm.logoUrl = item.logo || "";
-
       nextForm.rating = Number(item.rating || 5);
-
       nextForm.review = item.review || "";
     }
-
     setEditingId(item._id || item.id || null);
-
     setForm(nextForm);
-
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   };
-
   // ===================================================
   // CANCEL EDIT
   // ===================================================
-
   const handleCancelEdit = () => {
     setEditingId(null);
     setForm(emptyForm);
   };
-
   // ===================================================
   // FEATURED TOGGLE
   // ===================================================
-
   const handleFeaturedToggle = async (item) => {
     if (!supportsFeatured) {
       return;
     }
-
     const id = item._id || item.id;
-
     if (!id) {
       return;
     }
-
     try {
       setTogglingFeaturedId(id);
-
       const nextFeatured = !Boolean(item.isFeatured);
-
       const formData = new FormData();
-
       formData.append("name", item.name || "");
-
       formData.append("websiteUrl", item.websiteUrl || "");
-
       formData.append("isFeatured", String(nextFeatured));
-
       await adminFetch(`/website/admin/brands/${id}`, {
         method: "PATCH",
         body: formData,
       });
-
       setItems((previous) =>
         previous.map((currentItem) => {
           const currentId = currentItem._id || currentItem.id;
-
           if (currentId !== id) {
             return currentItem;
           }
-
           return {
             ...currentItem,
             isFeatured: nextFeatured,
           };
         }),
       );
-
       if (editingId === id) {
         setForm((previous) => ({
           ...previous,
           isFeatured: nextFeatured,
         }));
       }
-
       toast.success(
         nextFeatured ? "Marked as featured." : "Removed from featured.",
       );
     } catch (error) {
       console.error("Featured toggle error:", error);
-
       if (error?.status !== 401) {
         toast.error(error?.message || "Unable to update featured status.");
       }
@@ -1018,85 +1053,105 @@ export default function WebsiteManager() {
       setTogglingFeaturedId("");
     }
   };
-
   // ===================================================
   // SUBMIT
   // ===================================================
-
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     try {
       setSaving(true);
-
+      // ===============================================
+      // HOW WE HELP
+      // ===============================================
+      if (activeTab === "howWeHelp") {
+        const businessNeeds = (form.businessNeeds || [])
+          .map((item) => String(item).trim())
+          .filter(Boolean);
+        const bidApproach = (form.bidApproach || [])
+          .map((item) => String(item).trim())
+          .filter(Boolean);
+        if (!form.clientName?.trim()) {
+          toast.error("Client name is required.");
+          return;
+        }
+        if (!businessNeeds.length || !bidApproach.length) {
+          toast.error("Add at least one item to both bullet lists.");
+          return;
+        }
+        if (!editingId && !form.howWeHelpLogo) {
+          toast.error("Please select a client logo.");
+          return;
+        }
+        const formData = new FormData();
+        formData.append("clientName", form.clientName.trim());
+        formData.append("businessNeeds", JSON.stringify(businessNeeds));
+        formData.append("bidApproach", JSON.stringify(bidApproach));
+        formData.append("resultMetric", form.resultMetric?.trim() || "");
+        formData.append("isActive", String(Boolean(form.isActive)));
+        formData.append("sortOrder", String(Number(form.sortOrder) || 0));
+        if (form.howWeHelpLogo) formData.append("logo", form.howWeHelpLogo);
+        if (editingId) {
+          await adminFetch(`/how-we-help/admin/${editingId}`, {
+            method: "PATCH",
+            body: formData,
+          });
+          toast.success("How We Help entry updated.");
+        } else {
+          await adminFetch("/how-we-help/admin", {
+            method: "POST",
+            body: formData,
+          });
+          toast.success("How We Help entry created.");
+        }
+      }
       // ===============================================
       // REVIEWS
       // ===============================================
-
-      if (activeTab === "reviews") {
+      else if (activeTab === "reviews") {
         const name = form.name?.trim();
-
         const reviewText = form.review?.trim();
-
         const rating = Number(form.rating);
-
         if (!name) {
           toast.error("Client name is required.");
-
           setSaving(false);
           return;
         }
-
         if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
           toast.error("Rating must be between 1 and 5.");
-
           setSaving(false);
           return;
         }
-
         if (!reviewText) {
           toast.error("Review text is required.");
-
           setSaving(false);
           return;
         }
-
         if (!editingId && !form.logo) {
           toast.error("Please select a client logo.");
-
           setSaving(false);
           return;
         }
-
         const formData = new FormData();
-
         formData.append("name", name);
-
         formData.append("rating", String(rating));
-
         formData.append("review", reviewText);
-
         if (form.logo) {
           formData.append("logo", form.logo);
         }
-
         if (editingId) {
           await adminFetch(`/website/admin/reviews/${editingId}`, {
             method: "PATCH",
             body: formData,
           });
-
           toast.success("Review updated.");
         } else {
           await adminFetch("/website/admin/reviews", {
             method: "POST",
             body: formData,
           });
-
           toast.success("Review created.");
         }
       }
-
       // ===============================================
       // SERVICES
       // ===============================================
@@ -1104,177 +1159,132 @@ export default function WebsiteManager() {
         const validFeatures = (form.features || [])
           .map((feature) => String(feature).trim())
           .filter(Boolean);
-
         if (!form.title?.trim()) {
           toast.error("Service title is required.");
-
           setSaving(false);
           return;
         }
-
         if (!form.shortDescription?.trim()) {
           toast.error("Short description is required.");
-
           setSaving(false);
           return;
         }
-
         if (!validFeatures.length) {
           toast.error("Add at least one feature.");
-
           setSaving(false);
           return;
         }
-
         if (!editingId && !form.icon) {
           toast.error("Please select a service icon.");
-
           setSaving(false);
           return;
         }
-
         const formData = new FormData();
-
         formData.append("title", form.title.trim());
-
         formData.append("shortDescription", form.shortDescription.trim());
-
         formData.append("features", JSON.stringify(validFeatures));
-
         if (form.icon) {
           formData.append("icon", form.icon);
         }
-
         if (editingId) {
           await adminFetch(`/website/admin/services/${editingId}`, {
             method: "PATCH",
             body: formData,
           });
-
           toast.success("Service updated.");
         } else {
           await adminFetch("/website/admin/services", {
             method: "POST",
             body: formData,
           });
-
           toast.success("Service created.");
         }
       }
-
       // ===============================================
       // TECH CAPABILITIES
       // ===============================================
       else if (activeTab === "tech") {
         if (!form.title?.trim()) {
           toast.error("Technology title is required.");
-
           setSaving(false);
           return;
         }
-
         if (!form.line1 && !form.line2) {
           toast.error("Select Line 1 or Line 2.");
-
           setSaving(false);
           return;
         }
-
         if (form.line1 && form.line2) {
           toast.error("A technology can belong to only one line.");
-
           setSaving(false);
           return;
         }
-
         if (!editingId && !form.icon) {
           toast.error("Please select a technology icon.");
-
           setSaving(false);
           return;
         }
-
         const formData = new FormData();
-
         formData.append("title", form.title.trim());
-
         formData.append("line1", String(Boolean(form.line1)));
-
         formData.append("line2", String(Boolean(form.line2)));
-
         if (form.icon) {
           formData.append("icon", form.icon);
         }
-
         if (editingId) {
           await adminFetch(`/website/admin/techCapabilities/${editingId}`, {
             method: "PATCH",
             body: formData,
           });
-
           toast.success("Technology updated.");
         } else {
           await adminFetch("/website/admin/techCapabilities", {
             method: "POST",
             body: formData,
           });
-
           toast.success("Technology created.");
         }
       }
-
       // ===============================================
       // BRANDS
       // ===============================================
       else if (activeTab === "brands") {
         const formData = new FormData();
-
         formData.append("name", form.name || "");
-
         formData.append("websiteUrl", form.websiteUrl || "");
-
         formData.append("isFeatured", String(Boolean(form.isFeatured)));
-
         if (form.logo) {
           formData.append("logo", form.logo);
         }
-
         if (editingId) {
           await adminFetch(`/website/admin/brands/${editingId}`, {
             method: "PATCH",
             body: formData,
           });
-
           toast.success("Brand updated.");
         } else {
           if (!form.logo) {
             toast.error("Please select a brand logo.");
-
             setSaving(false);
             return;
           }
-
           await adminFetch("/website/admin/brands", {
             method: "POST",
             body: formData,
           });
-
           toast.success("Brand created.");
         }
       }
-
       // ===============================================
       // STATS
       // ===============================================
       else {
         const payload = preparePayload(form, config.fields);
-
         if (editingId) {
           await adminFetch(`/website/admin/${config.type}/${editingId}`, {
             method: "PATCH",
             body: JSON.stringify(payload),
           });
-
           toast.success(
             `${config.label.slice(0, -1) || config.label} updated.`,
           );
@@ -1283,22 +1293,18 @@ export default function WebsiteManager() {
             method: "POST",
             body: JSON.stringify(payload),
           });
-
           toast.success(
             `${config.label.slice(0, -1) || config.label} created.`,
           );
         }
       }
-
       setEditingId(null);
       setForm(emptyForm);
-
       await loadItems({
         silent: true,
       });
     } catch (error) {
       console.error("Save website manager data error:", error);
-
       if (error?.status !== 401) {
         toast.error(
           error?.message || `Unable to save ${config.label.toLowerCase()}.`,
@@ -1308,39 +1314,32 @@ export default function WebsiteManager() {
       setSaving(false);
     }
   };
-
   // ===================================================
   // DELETE
   // ===================================================
-
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Delete this item? This action cannot be undone.",
     );
-
     if (!confirmed) {
       return;
     }
-
     try {
       setDeletingId(id);
-
-      await adminFetch(`/website/admin/${config.type}/${id}`, {
-        method: "DELETE",
-      });
-
+      const endpoint =
+        config.type === "howWeHelp"
+          ? `/how-we-help/admin/${id}`
+          : `/website/admin/${config.type}/${id}`;
+      await adminFetch(endpoint, { method: "DELETE" });
       if (editingId === id) {
         handleCancelEdit();
       }
-
       toast.success("Item deleted.");
-
       await loadItems({
         silent: true,
       });
     } catch (error) {
       console.error("Delete website manager data error:", error);
-
       if (error?.status !== 401) {
         toast.error(error?.message || "Unable to delete this item.");
       }
@@ -1348,53 +1347,43 @@ export default function WebsiteManager() {
       setDeletingId("");
     }
   };
-
   // ===================================================
   // RENDER
   // ===================================================
-
   return (
     <div className="min-h-screen bg-[#080907] text-[#F5F3EE]">
       <AdminSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-
       <div className="min-h-screen lg:ml-[260px]">
         <AdminTopbar admin={admin} onMenuClick={() => setSidebarOpen(true)} />
-
         <main className="mx-auto max-w-[1700px] px-5 py-10 sm:px-8 lg:px-[50px] lg:py-[58px]">
           {/* =================================================
               HEADER
           ================================================= */}
-
           <section className="mb-9">
             <span className="text-[9px] tracking-[0.2em] text-[#C9A66B]">
               WEBSITE / 01
             </span>
-
             <div className="mt-4 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <h1 className="font-serif text-[48px] font-normal leading-none tracking-[-0.045em] sm:text-[64px]">
                   Website
                   <em className="text-[#C9A66B]"> Manager.</em>
                 </h1>
-
                 <p className="mt-4 max-w-xl text-[13px] leading-7 text-[#77746D]">
                   Manage website statistics, services, technologies, brands and
                   customer reviews.
                 </p>
               </div>
-
               <div className="flex items-center gap-3">
                 <div className="border border-[#292722] bg-[#0D0E0C] px-4 py-3">
                   <p className="text-[9px] uppercase tracking-[0.2em] text-[#68665F]">
                     Records
                   </p>
-
                   <p className="mt-1 text-lg text-[#F5F3EE]">{items.length}</p>
                 </div>
-
                 <button
                   type="button"
                   onClick={() => loadItems()}
@@ -1406,16 +1395,13 @@ export default function WebsiteManager() {
               </div>
             </div>
           </section>
-
           {/* =================================================
               TABS
           ================================================= */}
-
           <div className="mb-8 overflow-hidden border-b border-[#292722]">
             <div className="flex w-full gap-1 overflow-x-auto scrollbar-none">
               {Object.entries(tabs).map(([key, tab]) => {
                 const active = activeTab === key;
-
                 return (
                   <button
                     key={key}
@@ -1428,7 +1414,6 @@ export default function WebsiteManager() {
                     }`}
                   >
                     {tab.label}
-
                     {active && (
                       <span className="absolute bottom-[-1px] left-0 right-0 h-px bg-[#C9A66B]" />
                     )}
@@ -1437,23 +1422,19 @@ export default function WebsiteManager() {
               })}
             </div>
           </div>
-
           <div className="grid gap-8 xl:grid-cols-[430px_minmax(0,1fr)]">
             {/* =================================================
                 FORM
             ================================================= */}
-
             <section className="h-fit border border-[#292722] bg-[#0D0E0C]">
               <div className="border-b border-[#292722] px-6 py-5">
                 <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#C9A66B]">
                   {config.eyebrow}
                 </p>
-
                 <div className="mt-2 flex items-center justify-between gap-4">
                   <h2 className="font-serif text-2xl text-[#F5F3EE]">
                     {isEditing ? `Edit ${config.label}` : `Add ${config.label}`}
                   </h2>
-
                   {isEditing && (
                     <button
                       type="button"
@@ -1464,48 +1445,46 @@ export default function WebsiteManager() {
                     </button>
                   )}
                 </div>
-
                 <p className="mt-2 text-xs leading-5 text-[#68665F]">
                   {config.description}
                 </p>
               </div>
-
               <form onSubmit={handleSubmit} className="space-y-5 p-6">
-                {config.fields.map((field) => {
-                  if (field.type === "techLine") {
+                {activeTab === "howWeHelp" ? (
+                  <HowWeHelpForm form={form} onChange={handleFieldChange} />
+                ) : (
+                  config.fields.map((field) => {
+                    if (field.type === "techLine") {
+                      return (
+                        <TechLineField
+                          key={field.name}
+                          line1={form.line1}
+                          line2={form.line2}
+                          onChange={handleFieldChange}
+                        />
+                      );
+                    }
                     return (
-                      <TechLineField
+                      <InputField
                         key={field.name}
-                        line1={form.line1}
-                        line2={form.line2}
+                        field={field}
+                        value={form[field.name]}
                         onChange={handleFieldChange}
+                        existingImageUrl={
+                          field.type === "file"
+                            ? config.type === "brands" ||
+                              config.type === "reviews"
+                              ? form.logoUrl
+                              : config.type === "services" ||
+                                  config.type === "techCapabilities"
+                                ? form.iconUrl
+                                : ""
+                            : ""
+                        }
                       />
                     );
-                  }
-
-                  return (
-                    <InputField
-                      key={field.name}
-                      field={field}
-                      value={form[field.name]}
-                      onChange={handleFieldChange}
-                      existingImageUrl={
-                        field.type === "file"
-                          ? config.type === "brands"
-                            ? form.logoUrl
-                            : config.type === "services"
-                              ? form.iconUrl
-                              : config.type === "techCapabilities"
-                                ? form.iconUrl
-                                : config.type === "reviews"
-                                  ? form.logoUrl
-                                  : ""
-                          : ""
-                      }
-                    />
-                  );
-                })}
-
+                  })
+                )}
                 <button
                   type="submit"
                   disabled={saving}
@@ -1519,23 +1498,19 @@ export default function WebsiteManager() {
                 </button>
               </form>
             </section>
-
             {/* =================================================
                 CONTENT LIST
             ================================================= */}
-
             <section className="min-w-0">
               <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#C9A66B]">
                     CONTENT DATABASE
                   </p>
-
                   <h2 className="mt-1 font-serif text-2xl text-[#F5F3EE]">
                     {config.title}
                   </h2>
                 </div>
-
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
@@ -1543,7 +1518,6 @@ export default function WebsiteManager() {
                   className="w-full border border-[#292722] bg-[#0D0E0C] px-4 py-3 text-sm text-[#F5F3EE] outline-none placeholder:text-[#68665F] focus:border-[#C9A66B] sm:max-w-xs"
                 />
               </div>
-
               {loading ? (
                 <div className="border border-[#292722] bg-[#0D0E0C] p-10 text-center">
                   <p className="text-xs uppercase tracking-[0.16em] text-[#68665F]">
@@ -1555,23 +1529,21 @@ export default function WebsiteManager() {
                   <p className="font-serif text-2xl text-[#F5F3EE]">
                     No content found
                   </p>
-
                   <p className="mt-2 text-sm text-[#68665F]">
                     Create your first{" "}
-                    {config.label.toLowerCase().replace(/s$/, "")}.
+                    {config.label.toLowerCase().endsWith("s")
+                      ? config.label.toLowerCase().slice(0, -1)
+                      : config.label.toLowerCase()}
+                    .
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {filteredItems.map((item, index) => {
                     const id = item._id || item.id || String(index);
-
                     const itemTitle = getDisplayTitle(item, config.type);
-
                     const subtitle = getDisplaySubtitle(item, config.type);
-
                     const featured = Boolean(item.isFeatured);
-
                     return (
                       <article
                         key={id}
@@ -1586,8 +1558,15 @@ export default function WebsiteManager() {
                             {/* --------------------------------
                                   IMAGE
                               -------------------------------- */}
-
-                            {config.type === "brands" && item.logoUrl ? (
+                            {config.type === "howWeHelp" && item.logoUrl ? (
+                              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden border border-[#292722] bg-white p-2">
+                                <img
+                                  src={item.logoUrl}
+                                  alt={`${item.clientName || "Client"} logo`}
+                                  className="max-h-full max-w-full object-contain"
+                                />
+                              </div>
+                            ) : config.type === "brands" && item.logoUrl ? (
                               <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden border border-[#292722] bg-white p-2">
                                 <img
                                   src={item.logoUrl}
@@ -1625,17 +1604,14 @@ export default function WebsiteManager() {
                                 {String(index + 1).padStart(2, "0")}
                               </div>
                             )}
-
                             {/* --------------------------------
                                   CONTENT
                               -------------------------------- */}
-
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
                                 <h3 className="truncate text-sm font-semibold text-[#F5F3EE]">
                                   {itemTitle}
                                 </h3>
-
                                 {supportsFeatured && (
                                   <button
                                     type="button"
@@ -1663,7 +1639,6 @@ export default function WebsiteManager() {
                                     />
                                   </button>
                                 )}
-
                                 {supportsFeatured && (
                                   <span
                                     className={`text-[8px] font-semibold uppercase tracking-[0.14em] ${
@@ -1680,17 +1655,14 @@ export default function WebsiteManager() {
                                   </span>
                                 )}
                               </div>
-
                               {subtitle && (
                                 <p className="mt-1 truncate text-xs text-[#68665F]">
                                   {subtitle}
                                 </p>
                               )}
-
                               {/* --------------------------------
                                     SERVICE FEATURES
                                 -------------------------------- */}
-
                               {config.type === "services" &&
                                 Array.isArray(item.features) &&
                                 item.features.length > 0 && (
@@ -1698,11 +1670,49 @@ export default function WebsiteManager() {
                                     {item.features.join(" · ")}
                                   </p>
                                 )}
-
+                              {config.type === "howWeHelp" && (
+                                <div className="mt-3 grid gap-3 text-xs leading-5 text-[#A7A39B] sm:grid-cols-2">
+                                  <div>
+                                    <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#C9A66B]">
+                                      Business Needs
+                                    </p>
+                                    <ul className="list-disc space-y-1 pl-4">
+                                      {(item.businessNeeds || []).map(
+                                        (need, i) => (
+                                          <li key={i}>{need}</li>
+                                        ),
+                                      )}
+                                    </ul>
+                                  </div>
+                                  <div>
+                                    <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#C9A66B]">
+                                      The BID Approach
+                                    </p>
+                                    <ul className="list-disc space-y-1 pl-4">
+                                      {(item.bidApproach || []).map(
+                                        (approach, i) => (
+                                          <li key={i}>{approach}</li>
+                                        ),
+                                      )}
+                                    </ul>
+                                  </div>
+                                </div>
+                              )}
+                              {config.type === "howWeHelp" && (
+                                <div className="mt-3 flex flex-wrap gap-2 text-[9px] uppercase tracking-[0.12em]">
+                                  <span className="border border-[#292722] px-2 py-1 text-[#A7A39B]">
+                                    Order: {item.sortOrder ?? 0}
+                                  </span>
+                                  <span
+                                    className={`border px-2 py-1 ${item.isActive ? "border-[#C9A66B] text-[#C9A66B]" : "border-[#292722] text-[#68665F]"}`}
+                                  >
+                                    {item.isActive ? "Active" : "Inactive"}
+                                  </span>
+                                </div>
+                              )}
                               {/* --------------------------------
                                     TECH LINES
                                 -------------------------------- */}
-
                               {config.type === "techCapabilities" && (
                                 <div className="mt-2 flex flex-wrap items-center gap-2">
                                   <span
@@ -1714,7 +1724,6 @@ export default function WebsiteManager() {
                                   >
                                     Line 1
                                   </span>
-
                                   <span
                                     className={`border px-2 py-1 text-[8px] font-semibold uppercase tracking-[0.14em] ${
                                       item.line2
@@ -1726,11 +1735,9 @@ export default function WebsiteManager() {
                                   </span>
                                 </div>
                               )}
-
                               {/* --------------------------------
                                     REVIEW RATING
                                 -------------------------------- */}
-
                               {config.type === "reviews" && (
                                 <div className="mt-2 flex items-center gap-1 text-[#C9A66B]">
                                   {Array.from({
@@ -1747,18 +1754,15 @@ export default function WebsiteManager() {
                                       ★
                                     </span>
                                   ))}
-
                                   <span className="ml-2 text-[9px] text-[#68665F]">
                                     {Number(item.rating || 0)}
                                     /5
                                   </span>
                                 </div>
                               )}
-
                               {/* --------------------------------
                                     REVIEW TEXT
                                 -------------------------------- */}
-
                               {config.type === "reviews" && item.review && (
                                 <p className="mt-2 line-clamp-2 max-w-2xl text-xs leading-5 text-[#A7A39B]">
                                   "{item.review}"
@@ -1766,11 +1770,9 @@ export default function WebsiteManager() {
                               )}
                             </div>
                           </div>
-
                           {/* --------------------------------
                                 ACTIONS
                             -------------------------------- */}
-
                           <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
@@ -1779,7 +1781,6 @@ export default function WebsiteManager() {
                             >
                               Edit
                             </button>
-
                             <button
                               type="button"
                               disabled={deletingId === id}

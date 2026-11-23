@@ -47,6 +47,31 @@ const mediaSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    fileSize: {
+      type: Number,
+      default: 0,
+    },
+
+    width: {
+      type: Number,
+      default: 0,
+    },
+
+    height: {
+      type: Number,
+      default: 0,
+    },
+
+    duration: {
+      type: Number,
+      default: 0,
+    },
+
+    format: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
     thumbnail: {
       type: String,

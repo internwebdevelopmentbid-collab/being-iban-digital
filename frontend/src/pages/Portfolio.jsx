@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 import api_url from "../config/api";
 
@@ -33,24 +33,22 @@ const CATEGORY_CONFIG = [
 ];
 
 const normalizeMedia = (items) => {
-  if (!Array.isArray(items)) {
-    return [];
-  }
+  if (!Array.isArray(items)) return [];
 
   return items
     .filter((item) => {
-      if (!item?.category) {
-        return false;
-      }
+      if (!item?.category) return false;
 
-      if (item.category === "website") {
+      const category = String(item.category).toLowerCase();
+
+      if (category === "website") {
         return Boolean(
           item.projectUrl?.trim() &&
           (item.thumbnail?.trim() || item.mediaUrl?.trim()),
         );
       }
 
-      if (item.category === "image" || item.category === "video") {
+      if (category === "image" || category === "video") {
         return Boolean(item.mediaUrl?.trim());
       }
 
@@ -67,36 +65,42 @@ const Portfolio = () => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const reducedMotion = useReducedMotion();
+
   useEffect(() => {
-    let mounted = true;
+    const controller = new AbortController();
 
     const fetchPortfolioMedia = async () => {
       try {
         setLoading(true);
         setErrorMessage("");
 
-        const response = await fetch(`${api_url}/api/media/portfolio`);
+        const response = await fetch(`${api_url}/api/media/portfolio`, {
+          signal: controller.signal,
+        });
 
-        const data = await response.json();
+        let data;
 
-        if (!response.ok || !data.success) {
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("The server returned an invalid response.");
+        }
+
+        if (!response.ok || !data?.success) {
           throw new Error(data?.message || "Unable to load portfolio media.");
         }
 
-        const normalizedMedia = normalizeMedia(data.media);
-
-        if (mounted) {
-          setMedia(normalizedMedia);
-        }
+        setMedia(normalizeMedia(data.media));
       } catch (error) {
+        if (error.name === "AbortError") return;
+
         console.error("Portfolio media fetch error:", error);
 
-        if (mounted) {
-          setMedia([]);
-          setErrorMessage(error?.message || "Unable to load portfolio media.");
-        }
+        setMedia([]);
+        setErrorMessage(error?.message || "Unable to load portfolio media.");
       } finally {
-        if (mounted) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -105,19 +109,18 @@ const Portfolio = () => {
     fetchPortfolioMedia();
 
     return () => {
-      mounted = false;
+      controller.abort();
     };
   }, []);
 
-  const groupedMedia = useMemo(() => {
-    return {
+  const groupedMedia = useMemo(
+    () => ({
       image: media.filter((item) => item.category === "image"),
-
       video: media.filter((item) => item.category === "video"),
-
       website: media.filter((item) => item.category === "website"),
-    };
-  }, [media]);
+    }),
+    [media],
+  );
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#080907] text-[#f5f3ee]">
@@ -127,9 +130,13 @@ const Portfolio = () => {
 
       <section
         id="selected-works"
+        aria-labelledby="selected-works-heading"
         className="relative overflow-hidden border-t border-[#292722]"
       >
-        <div className="pointer-events-none absolute inset-0">
+        <div
+          className="pointer-events-none absolute inset-0"
+          aria-hidden="true"
+        >
           <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-[#c9a66b]/[0.035] blur-[150px]" />
 
           <div
@@ -144,20 +151,14 @@ const Portfolio = () => {
 
         <div className="relative mx-auto max-w-[1600px] px-5 pb-8 pt-20 sm:px-8 sm:pb-10 sm:pt-24 lg:px-12 lg:pb-12 lg:pt-32">
           <motion.div
-            initial={{
-              opacity: 0,
-              y: 25,
-            }}
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
+            initial={reducedMotion ? false : { opacity: 0, y: 25 }}
+            whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
             viewport={{
               once: true,
               amount: 0.2,
             }}
             transition={{
-              duration: 0.7,
+              duration: reducedMotion ? 0 : 0.7,
               ease: [0.22, 1, 0.36, 1],
             }}
             className="mb-16 flex flex-col gap-8 lg:mb-24 lg:flex-row lg:items-end lg:justify-between"
@@ -167,7 +168,10 @@ const Portfolio = () => {
                 Selected Work
               </p>
 
-              <h2 className="font-sans text-4xl font-black uppercase leading-[0.92] tracking-[-0.045em] text-[#f5f3ee] sm:text-6xl lg:text-7xl">
+              <h2
+                id="selected-works-heading"
+                className="font-sans text-4xl font-black uppercase leading-[0.92] tracking-[-0.045em] text-[#f5f3ee] sm:text-6xl lg:text-7xl"
+              >
                 Work that
                 <br />
                 moves brands.
@@ -197,48 +201,59 @@ const Portfolio = () => {
           )}
         </div>
       </section>
+
       <ContactCTA />
     </main>
   );
 };
 
-const PortfolioLoadingState = () => {
-  return (
-    <div className="space-y-20 lg:space-y-28">
-      {[1, 2, 3].map((row) => (
-        <div key={row}>
-          <div className="mb-7 flex items-end justify-between border-b border-[#292722] pb-5">
-            <div className="h-3 w-24 animate-pulse bg-[#292722]" />
-
-            <div className="h-3 w-16 animate-pulse bg-[#292722]" />
+const PortfolioLoadingState = () => (
+  <div
+    className="space-y-24 lg:space-y-32"
+    role="status"
+    aria-label="Loading portfolio projects"
+  >
+    {[1, 2, 3].map((row) => (
+      <div key={row}>
+        <div className="mb-7 flex items-end justify-between border-b border-[#292722] pb-5">
+          <div className="space-y-3">
+            <div className="h-2 w-20 animate-pulse bg-[#292722]" />
+            <div className="h-9 w-40 animate-pulse bg-[#11120f] sm:h-12 sm:w-52" />
           </div>
 
-          <div className="flex gap-5 overflow-hidden">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="h-[360px] min-w-[280px] animate-pulse bg-[#11120f] sm:min-w-[360px] lg:min-w-[420px]"
-              />
-            ))}
-          </div>
+          <div className="hidden h-3 w-32 animate-pulse bg-[#292722] sm:block" />
         </div>
-      ))}
-    </div>
-  );
-};
 
-const PortfolioErrorState = ({ message }) => {
-  return (
-    <div className="border border-[#292722] bg-[#11120f] px-6 py-12 text-center">
-      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c9a66b]">
-        Portfolio unavailable
-      </p>
+        <div className="flex gap-5 overflow-hidden">
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="h-[360px] w-[82vw] max-w-[420px] shrink-0 animate-pulse border border-[#292722] bg-[#11120f] sm:w-[360px] lg:w-[420px]"
+            />
+          ))}
+        </div>
 
-      <p className="mx-auto mt-4 max-w-lg font-sans text-sm leading-7 text-[#a7a39b]">
-        {message}
-      </p>
-    </div>
-  );
-};
+        <div className="mt-5 h-2 w-20 animate-pulse bg-[#292722]" />
+      </div>
+    ))}
+
+    <span className="sr-only">Loading selected work.</span>
+  </div>
+);
+
+const PortfolioErrorState = ({ message }) => (
+  <div
+    className="border border-[#292722] bg-[#11120f] px-6 py-12 text-center"
+    role="alert"
+  >
+    <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c9a66b]">
+      Portfolio unavailable
+    </p>
+
+    <p className="mx-auto mt-4 max-w-lg font-sans text-sm leading-7 text-[#a7a39b]">
+      {message}
+    </p>
+  </div>
+);
 
 export default Portfolio;

@@ -41,6 +41,32 @@ const uploadToCloudinary = (
 
 /*
 |--------------------------------------------------------------------------
+| Extract Cloudinary Metadata
+|--------------------------------------------------------------------------
+|
+| Cloudinary gives us:
+|
+| bytes     -> file size
+| width     -> width
+| height    -> height
+| duration  -> video duration
+| format    -> mp4, jpg, png, etc.
+|
+|--------------------------------------------------------------------------
+*/
+
+const getCloudinaryMetadata = (result) => {
+  return {
+    fileSize: Number(result?.bytes || 0),
+    width: Number(result?.width || 0),
+    height: Number(result?.height || 0),
+    duration: Number(result?.duration || 0),
+    format: String(result?.format || ""),
+  };
+};
+
+/*
+|--------------------------------------------------------------------------
 | Boolean Helper
 |--------------------------------------------------------------------------
 */
@@ -136,6 +162,10 @@ export const getHeroGallery = async (req, res) => {
   try {
     const media = await Media.find({
       showInHero: true,
+      category: "video",
+      mediaUrl: {
+        $ne: "",
+      },
     })
       .sort({
         isFeatured: -1,
@@ -163,13 +193,6 @@ export const getHeroGallery = async (req, res) => {
 | Get Portfolio Media
 |--------------------------------------------------------------------------
 | GET /api/media/portfolio
-|
-| Optional:
-|
-| ?category=website
-| ?category=image
-| ?category=video
-| ?featured=true
 |--------------------------------------------------------------------------
 */
 
@@ -252,18 +275,7 @@ export const getWorksCTA = async (req, res) => {
 |--------------------------------------------------------------------------
 | Get All Media
 |--------------------------------------------------------------------------
-| Admin
 | GET /api/media/admin
-|
-| Query:
-|
-| ?category=website
-| ?category=image
-| ?category=video
-| ?featured=true
-| ?hero=true
-| ?cta=true
-| ?search=...
 |--------------------------------------------------------------------------
 */
 
@@ -371,47 +383,12 @@ export const getAllMedia = async (req, res) => {
 |--------------------------------------------------------------------------
 | Upload Media
 |--------------------------------------------------------------------------
-| Admin
 | POST /api/media/admin/upload
-|
-| FormData:
-|
-| media
-| thumbnail
-|
-| title
-| category
-| clientName
-| customTag
-| projectUrl
-| isFeatured
-| showInCTA
-| showInHero
-|
-|--------------------------------------------------------------------------
-| Category behavior:
-|
-| website
-|   -> thumbnail is required
-|   -> projectUrl is required
-|
-| image
-|   -> media image is required
-|
-| video
-|   -> media video is required
-|   -> NO thumbnail
 |--------------------------------------------------------------------------
 */
 
 export const uploadMedia = async (req, res) => {
   try {
-    /*
-    |--------------------------------------------------------------------------
-    | Read Request Data
-    |--------------------------------------------------------------------------
-    */
-
     const {
       title = "",
       category = "",
@@ -489,22 +466,12 @@ export const uploadMedia = async (req, res) => {
         });
       }
 
-      /*
-      |--------------------------------------------------------------------------
-      | Upload Website Thumbnail
-      |--------------------------------------------------------------------------
-      */
-
       const thumbnailResult = await uploadToCloudinary(thumbnailFile.buffer, {
         resourceType: "image",
         folder: "iban-digital/thumbnails",
       });
 
-      /*
-      |--------------------------------------------------------------------------
-      | Create Website Record
-      |--------------------------------------------------------------------------
-      */
+      const thumbnailMetadata = getCloudinaryMetadata(thumbnailResult);
 
       const media = await Media.create({
         title: normalizedTitle,
@@ -520,6 +487,16 @@ export const uploadMedia = async (req, res) => {
         mediaUrl: thumbnailResult.secure_url,
 
         publicId: thumbnailResult.public_id,
+
+        fileSize: thumbnailMetadata.fileSize,
+
+        width: thumbnailMetadata.width,
+
+        height: thumbnailMetadata.height,
+
+        duration: 0,
+
+        format: thumbnailMetadata.format,
 
         thumbnail: thumbnailResult.secure_url,
 
@@ -539,7 +516,7 @@ export const uploadMedia = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | Image / Video Actual Media
+    | Image / Video
     |--------------------------------------------------------------------------
     */
 
@@ -574,11 +551,7 @@ export const uploadMedia = async (req, res) => {
         folder: "iban-digital/images",
       });
 
-      /*
-      |--------------------------------------------------------------------------
-      | Image uses itself as thumbnail
-      |--------------------------------------------------------------------------
-      */
+      const metadata = getCloudinaryMetadata(mediaResult);
 
       const media = await Media.create({
         title: normalizedTitle,
@@ -594,6 +567,16 @@ export const uploadMedia = async (req, res) => {
         mediaUrl: mediaResult.secure_url,
 
         publicId: mediaResult.public_id,
+
+        fileSize: metadata.fileSize,
+
+        width: metadata.width,
+
+        height: metadata.height,
+
+        duration: 0,
+
+        format: metadata.format,
 
         thumbnail: mediaResult.secure_url,
 
@@ -615,10 +598,6 @@ export const uploadMedia = async (req, res) => {
     |--------------------------------------------------------------------------
     | Video
     |--------------------------------------------------------------------------
-    |
-    | IMPORTANT:
-    | No thumbnail is accepted or required.
-    |
     */
 
     if (normalizedCategory === "video") {
@@ -636,9 +615,11 @@ export const uploadMedia = async (req, res) => {
 
       /*
       |--------------------------------------------------------------------------
-      | Create Video Record
+      | Cloudinary Video Metadata
       |--------------------------------------------------------------------------
       */
+
+      const metadata = getCloudinaryMetadata(mediaResult);
 
       const media = await Media.create({
         title: normalizedTitle,
@@ -654,6 +635,16 @@ export const uploadMedia = async (req, res) => {
         mediaUrl: mediaResult.secure_url,
 
         publicId: mediaResult.public_id,
+
+        fileSize: metadata.fileSize,
+
+        width: metadata.width,
+
+        height: metadata.height,
+
+        duration: metadata.duration,
+
+        format: metadata.format,
 
         thumbnail: "",
 
@@ -690,7 +681,6 @@ export const uploadMedia = async (req, res) => {
 |--------------------------------------------------------------------------
 | Update Media
 |--------------------------------------------------------------------------
-| Admin
 | PATCH /api/media/admin/:id
 |--------------------------------------------------------------------------
 */
@@ -737,17 +727,6 @@ export const updateMedia = async (req, res) => {
         });
       }
 
-      /*
-      |--------------------------------------------------------------------------
-      | Prevent Invalid Asset Changes
-      |--------------------------------------------------------------------------
-      |
-      | Category describes the actual media type.
-      | Do not silently convert an existing image/video
-      | into another category through metadata editing.
-      |
-      */
-
       if (category !== media.category) {
         return res.status(400).json({
           success: false,
@@ -791,7 +770,7 @@ export const updateMedia = async (req, res) => {
 
     /*
     |--------------------------------------------------------------------------
-    | Website Validation
+    | Validation
     |--------------------------------------------------------------------------
     */
 
@@ -811,12 +790,6 @@ export const updateMedia = async (req, res) => {
       }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Image Validation
-    |--------------------------------------------------------------------------
-    */
-
     if (media.category === "image") {
       if (!media.mediaUrl?.trim()) {
         return res.status(400).json({
@@ -826,15 +799,6 @@ export const updateMedia = async (req, res) => {
       }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Video Validation
-    |--------------------------------------------------------------------------
-    |
-    | No thumbnail required.
-    |
-    */
-
     if (media.category === "video") {
       if (!media.mediaUrl?.trim()) {
         return res.status(400).json({
@@ -842,12 +806,6 @@ export const updateMedia = async (req, res) => {
           message: "Video media URL is required.",
         });
       }
-
-      /*
-      |--------------------------------------------------------------------------
-      | Ensure Video Has No Thumbnail
-      |--------------------------------------------------------------------------
-      */
 
       media.thumbnail = "";
     }
@@ -874,10 +832,7 @@ export const updateMedia = async (req, res) => {
 |--------------------------------------------------------------------------
 | Replace Website Thumbnail
 |--------------------------------------------------------------------------
-| Admin
 | PATCH /api/media/admin/:id/thumbnail
-|
-| Only Website media uses a separate thumbnail.
 |--------------------------------------------------------------------------
 */
 
@@ -908,12 +863,6 @@ export const updateMediaThumbnail = async (req, res) => {
       });
     }
 
-    /*
-      |--------------------------------------------------------------------------
-      | Only Website Uses Separate Thumbnail
-      |--------------------------------------------------------------------------
-      */
-
     if (media.category !== "website") {
       return res.status(400).json({
         success: false,
@@ -926,11 +875,23 @@ export const updateMediaThumbnail = async (req, res) => {
       folder: "iban-digital/thumbnails",
     });
 
+    const metadata = getCloudinaryMetadata(result);
+
     media.thumbnail = result.secure_url;
 
     media.mediaUrl = result.secure_url;
 
     media.publicId = result.public_id;
+
+    media.fileSize = metadata.fileSize;
+
+    media.width = metadata.width;
+
+    media.height = metadata.height;
+
+    media.duration = 0;
+
+    media.format = metadata.format;
 
     await media.save();
 
@@ -953,10 +914,7 @@ export const updateMediaThumbnail = async (req, res) => {
 |--------------------------------------------------------------------------
 | Replace Actual Media
 |--------------------------------------------------------------------------
-| Admin
 | PATCH /api/media/admin/:id/media
-|
-| Only Image and Video categories use this endpoint.
 |--------------------------------------------------------------------------
 */
 
@@ -981,10 +939,10 @@ export const updateMediaAsset = async (req, res) => {
     }
 
     /*
-      |--------------------------------------------------------------------------
-      | Website
-      |--------------------------------------------------------------------------
-      */
+    |--------------------------------------------------------------------------
+    | Website
+    |--------------------------------------------------------------------------
+    */
 
     if (media.category === "website") {
       return res.status(400).json({
@@ -994,10 +952,10 @@ export const updateMediaAsset = async (req, res) => {
     }
 
     /*
-      |--------------------------------------------------------------------------
-      | Image
-      |--------------------------------------------------------------------------
-      */
+    |--------------------------------------------------------------------------
+    | Image
+    |--------------------------------------------------------------------------
+    */
 
     if (media.category === "image") {
       if (!req.file.mimetype.startsWith("image/")) {
@@ -1012,11 +970,23 @@ export const updateMediaAsset = async (req, res) => {
         folder: "iban-digital/images",
       });
 
+      const metadata = getCloudinaryMetadata(result);
+
       await deleteFromCloudinary(media.publicId, "image");
 
       media.mediaUrl = result.secure_url;
 
       media.publicId = result.public_id;
+
+      media.fileSize = metadata.fileSize;
+
+      media.width = metadata.width;
+
+      media.height = metadata.height;
+
+      media.duration = 0;
+
+      media.format = metadata.format;
 
       media.thumbnail = result.secure_url;
 
@@ -1030,10 +1000,10 @@ export const updateMediaAsset = async (req, res) => {
     }
 
     /*
-      |--------------------------------------------------------------------------
-      | Video
-      |--------------------------------------------------------------------------
-      */
+    |--------------------------------------------------------------------------
+    | Video
+    |--------------------------------------------------------------------------
+    */
 
     if (media.category === "video") {
       if (!req.file.mimetype.startsWith("video/")) {
@@ -1048,17 +1018,23 @@ export const updateMediaAsset = async (req, res) => {
         folder: "iban-digital/videos",
       });
 
+      const metadata = getCloudinaryMetadata(result);
+
       await deleteFromCloudinary(media.publicId, "video");
 
       media.mediaUrl = result.secure_url;
 
       media.publicId = result.public_id;
 
-      /*
-        |--------------------------------------------------------------------------
-        | Video NEVER Has A Thumbnail
-        |--------------------------------------------------------------------------
-        */
+      media.fileSize = metadata.fileSize;
+
+      media.width = metadata.width;
+
+      media.height = metadata.height;
+
+      media.duration = metadata.duration;
+
+      media.format = metadata.format;
 
       media.thumbnail = "";
 
@@ -1089,7 +1065,6 @@ export const updateMediaAsset = async (req, res) => {
 |--------------------------------------------------------------------------
 | Delete Media
 |--------------------------------------------------------------------------
-| Admin
 | DELETE /api/media/admin/:id
 |--------------------------------------------------------------------------
 */
@@ -1107,19 +1082,7 @@ export const deleteMedia = async (req, res) => {
       });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Delete Main Cloudinary Asset
-    |--------------------------------------------------------------------------
-    */
-
     await deleteFromCloudinary(media.publicId, media.category);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Delete Database Record
-    |--------------------------------------------------------------------------
-    */
 
     await Media.findByIdAndDelete(id);
 

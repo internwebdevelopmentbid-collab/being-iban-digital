@@ -1,68 +1,72 @@
-import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { motion, useAnimationFrame, useMotionValue } from "framer-motion";
+
 import api_url from "../../config/api";
 
-const fallbackCapabilities = [
-  {
-    _id: "fallback-1",
-    title: "React",
-    icon: "",
-    line1: true,
-    line2: false,
-  },
-  {
-    _id: "fallback-2",
-    title: "Node.js",
-    icon: "",
-    line1: true,
-    line2: false,
-  },
-  {
-    _id: "fallback-3",
-    title: "MongoDB",
-    icon: "",
-    line1: true,
-    line2: false,
-  },
-  {
-    _id: "fallback-4",
-    title: "Three.js",
-    icon: "",
-    line1: false,
-    line2: true,
-  },
-  {
-    _id: "fallback-5",
-    title: "Framer Motion",
-    icon: "",
-    line1: false,
-    line2: true,
-  },
-  {
-    _id: "fallback-6",
-    title: "Cloudinary",
-    icon: "",
-    line1: false,
-    line2: true,
-  },
-];
+/* ============================================================================
+   TECH CAPABILITIES
+============================================================================ */
+
+const TECH_CAPABILITIES_ENDPOINT = `${api_url}/api/website/techCapabilities`;
+
+/* ============================================================================
+   CLOUDINARY OPTIMIZATION
+============================================================================ */
+
+const optimizeCloudinaryUrl = (url, width = 144) => {
+  if (!url || typeof url !== "string") {
+    return url;
+  }
+
+  if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
+    return url;
+  }
+
+  const uploadMarker = "/upload/";
+  const [base, assetPath] = url.split(uploadMarker);
+
+  if (!assetPath) {
+    return url;
+  }
+
+  const [existingTransformations, ...rest] = assetPath.split("/");
+
+  const hasTransformation =
+    existingTransformations.includes("f_auto") ||
+    existingTransformations.includes("q_auto") ||
+    existingTransformations.includes("dpr_auto") ||
+    /(^|,)w_\d+(,|$)/.test(existingTransformations);
+
+  const transformation = `f_auto,q_auto,dpr_auto,w_${width}`;
+
+  if (hasTransformation) {
+    return url;
+  }
+
+  return `${base}${uploadMarker}${transformation}/${assetPath}`;
+};
+
+/* ============================================================================
+   TECH CAPABILITIES
+============================================================================ */
 
 const TechCapabilities = () => {
   const [capabilities, setCapabilities] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /*
-  |--------------------------------------------------------------------------
-  | LOAD TECHNOLOGY CAPABILITIES
-  |--------------------------------------------------------------------------
-  */
+  /* --------------------------------------------------------------------------
+     LOAD TECHNOLOGY CAPABILITIES
+  -------------------------------------------------------------------------- */
 
   useEffect(() => {
-    let mounted = true;
+    const controller = new AbortController();
 
     const loadCapabilities = async () => {
       try {
-        const response = await fetch(`${api_url}/api/website/techCapabilities`);
+        const response = await fetch(TECH_CAPABILITIES_ENDPOINT, {
+          signal: controller.signal,
+        });
 
         const result = await response.json();
 
@@ -76,17 +80,16 @@ const TechCapabilities = () => {
           ? result
           : result?.data || result?.techCapabilities || [];
 
-        if (mounted) {
-          setCapabilities(Array.isArray(data) ? data : []);
-        }
+        setCapabilities(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Failed to load technology capabilities:", error);
-
-        if (mounted) {
-          setCapabilities([]);
+        if (error?.name === "AbortError") {
+          return;
         }
+
+        console.error("Failed to load technology capabilities:", error);
+        setCapabilities([]);
       } finally {
-        if (mounted) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -95,29 +98,22 @@ const TechCapabilities = () => {
     loadCapabilities();
 
     return () => {
-      mounted = false;
+      controller.abort();
     };
   }, []);
 
-  /*
-  |--------------------------------------------------------------------------
-  | NORMALIZE CAPABILITIES
-  |--------------------------------------------------------------------------
-  */
+  /* --------------------------------------------------------------------------
+     NORMALIZE
+  -------------------------------------------------------------------------- */
 
-  const normalizedCapabilities = useMemo(() => {
-    if (capabilities.length > 0) {
-      return capabilities;
-    }
+  const normalizedCapabilities = useMemo(
+    () => (Array.isArray(capabilities) ? capabilities : []),
+    [capabilities],
+  );
 
-    return loading ? [] : fallbackCapabilities;
-  }, [capabilities, loading]);
-
-  /*
-  |--------------------------------------------------------------------------
-  | LINE ONE
-  |--------------------------------------------------------------------------
-  */
+  /* --------------------------------------------------------------------------
+     LINE ONE
+  -------------------------------------------------------------------------- */
 
   const lineOne = useMemo(
     () =>
@@ -127,11 +123,9 @@ const TechCapabilities = () => {
     [normalizedCapabilities],
   );
 
-  /*
-  |--------------------------------------------------------------------------
-  | LINE TWO
-  |--------------------------------------------------------------------------
-  */
+  /* --------------------------------------------------------------------------
+     LINE TWO
+  -------------------------------------------------------------------------- */
 
   const lineTwo = useMemo(
     () =>
@@ -141,16 +135,9 @@ const TechCapabilities = () => {
     [normalizedCapabilities],
   );
 
-  /*
-  |--------------------------------------------------------------------------
-  | UNASSIGNED ITEMS
-  |--------------------------------------------------------------------------
-  |
-  | If the database does not explicitly assign an item
-  | to either line, keep it visible by placing it into
-  | the first line.
-  |
-  */
+  /* --------------------------------------------------------------------------
+     UNASSIGNED
+  -------------------------------------------------------------------------- */
 
   const unassigned = useMemo(
     () =>
@@ -169,76 +156,15 @@ const TechCapabilities = () => {
     [lineOne, unassigned],
   );
 
-  const secondaryCapabilities = useMemo(() => lineTwo, [lineTwo]);
+  const secondaryCapabilities = lineTwo;
 
-  if (!loading && normalizedCapabilities.length === 0) {
+  /* --------------------------------------------------------------------------
+     NO FALLBACK
+  -------------------------------------------------------------------------- */
+
+  if (loading || normalizedCapabilities.length === 0) {
     return null;
   }
-
-  /*
-  |--------------------------------------------------------------------------
-  | PULSING GOLDEN DOTS
-  |--------------------------------------------------------------------------
-  */
-
-  const goldenDots = [
-    {
-      top: "9%",
-      left: "12%",
-      size: 3,
-      delay: 0,
-      duration: 3.8,
-    },
-    {
-      top: "18%",
-      left: "73%",
-      size: 4,
-      delay: 1.2,
-      duration: 4.6,
-    },
-    {
-      top: "31%",
-      left: "35%",
-      size: 2,
-      delay: 0.6,
-      duration: 3.4,
-    },
-    {
-      top: "42%",
-      left: "89%",
-      size: 3,
-      delay: 1.8,
-      duration: 4.2,
-    },
-    {
-      top: "55%",
-      left: "17%",
-      size: 4,
-      delay: 0.9,
-      duration: 4.8,
-    },
-    {
-      top: "67%",
-      left: "63%",
-      size: 2,
-      delay: 2.1,
-      duration: 3.7,
-    },
-    {
-      top: "78%",
-      left: "31%",
-      size: 3,
-      delay: 0.3,
-      duration: 4.5,
-    },
-    {
-      top: "89%",
-      left: "82%",
-      size: 4,
-      delay: 1.5,
-      duration: 4,
-    },
-  ];
 
   return (
     <section
@@ -246,15 +172,15 @@ const TechCapabilities = () => {
       className="
         relative
         overflow-hidden
-        bg-[#080907]
-        py-24
-        sm:py-28
+        bg-black
+        py-20
+        sm:py-24
         lg:py-36
       "
     >
-      {/* =========================================================
+      {/* =====================================================================
           AMBIENT GOLDEN BACKGROUND
-      ========================================================= */}
+      ===================================================================== */}
 
       <div
         aria-hidden="true"
@@ -266,94 +192,96 @@ const TechCapabilities = () => {
           overflow-hidden
         "
       >
-        {/* Central ambient glow */}
+        {/* Central glow */}
 
         <div
           className="
             absolute
             left-1/2
             top-1/2
-            h-[500px]
-            w-[500px]
+            h-[400px]
+            w-[400px]
             -translate-x-1/2
             -translate-y-1/2
             rounded-full
             bg-[#C9A66B]/[0.025]
-            blur-[120px]
+            blur-[100px]
+            sm:h-[450px]
+            sm:w-[450px]
+            lg:h-[500px]
+            lg:w-[500px]
+            lg:blur-[120px]
           "
         />
-
-        {/* Golden pulsing particles */}
-
-        {goldenDots.map((dot, index) => (
-          <motion.span
-            key={`golden-dot-${index}`}
-            className="
-              absolute
-              rounded-full
-              bg-[#C9A66B]
-            "
-            style={{
-              top: dot.top,
-              left: dot.left,
-              width: dot.size,
-              height: dot.size,
-              boxShadow: "0 0 12px 3px rgba(201,166,107,0.55)",
-            }}
-            animate={{
-              opacity: [0.15, 0.85, 0.25, 1, 0.15],
-              scale: [0.65, 1.4, 0.75, 1.25, 0.65],
-            }}
-            transition={{
-              duration: dot.duration,
-              delay: dot.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
       </div>
 
-      {/* =========================================================
+      {/* =====================================================================
           HEADER
-      ========================================================= */}
+      ===================================================================== */}
 
-      <div className="relative z-10 mx-auto max-w-[1600px] px-6 sm:px-10 lg:px-16">
-        <div className="mb-16 max-w-3xl sm:mb-20 lg:mb-24">
-          <div className="mb-6 flex items-center gap-4">
+      <div
+        className="
+          relative
+          z-10
+          mx-auto
+          max-w-[1600px]
+          px-5
+          sm:px-8
+          lg:px-16
+        "
+      >
+        <div
+          className="
+            mb-14
+            max-w-3xl
+            sm:mb-18
+            lg:mb-24
+          "
+        >
+          {/* Label */}
+
+          <div className="mb-5 flex items-center gap-3 sm:mb-6 sm:gap-4">
             <span
               aria-hidden="true"
               className="
                 h-px
-                w-8
+                w-7
                 bg-[#C9A66B]
-                sm:w-12
+                sm:w-10
+                lg:w-12
               "
             />
 
             <span
               className="
-                text-[10px]
+                text-[9px]
                 font-medium
                 uppercase
-                tracking-[0.32em]
+                tracking-[0.28em]
                 text-[#A7A39B]
-                sm:text-[11px]
+                sm:text-[10px]
+                sm:tracking-[0.32em]
+                lg:text-[11px]
               "
             >
               Technology
             </span>
           </div>
 
+          {/* Heading */}
+
           <h2
             className="
               max-w-[850px]
               text-balance
-              text-[clamp(42px,6vw,92px)]
+              text-[40px]
               font-medium
               leading-[0.95]
               tracking-[-0.055em]
               text-[#F5F3EE]
+              sm:text-[52px]
+              md:text-[64px]
+              lg:text-[clamp(42px,6vw,92px)]
             "
           >
             Built with the
@@ -361,17 +289,22 @@ const TechCapabilities = () => {
             <span className="text-[#C9A66B]">right technology.</span>
           </h2>
 
+          {/* Description */}
+
           <p
             className="
-              mt-7
+              mt-6
               max-w-[580px]
-              text-sm
-              leading-7
+              text-[13px]
+              leading-6
               tracking-[-0.01em]
               text-[#A7A39B]
-              sm:mt-9
-              sm:text-base
-              sm:leading-8
+              sm:mt-8
+              sm:text-sm
+              sm:leading-7
+              lg:mt-9
+              lg:text-base
+              lg:leading-8
             "
           >
             We combine modern technologies, platforms and digital capabilities
@@ -380,14 +313,12 @@ const TechCapabilities = () => {
         </div>
       </div>
 
-      {/* =========================================================
-          TECHNOLOGY MARQUEE AREA
-      ========================================================= */}
+      {/* =====================================================================
+          MARQUEE AREA
+      ===================================================================== */}
 
       <div className="relative z-10">
-        {/* ---------------------------------------------------------
-            LEFT EDGE FADE
-        --------------------------------------------------------- */}
+        {/* Left fade */}
 
         <div
           aria-hidden="true"
@@ -397,18 +328,17 @@ const TechCapabilities = () => {
             inset-y-0
             left-0
             z-20
-            w-16
+            w-10
             bg-gradient-to-r
             from-[#080907]
             to-transparent
-            sm:w-28
+            sm:w-16
+            md:w-24
             lg:w-52
           "
         />
 
-        {/* ---------------------------------------------------------
-            RIGHT EDGE FADE
-        --------------------------------------------------------- */}
+        {/* Right fade */}
 
         <div
           aria-hidden="true"
@@ -418,18 +348,19 @@ const TechCapabilities = () => {
             inset-y-0
             right-0
             z-20
-            w-16
+            w-10
             bg-gradient-to-l
             from-[#080907]
             to-transparent
-            sm:w-28
+            sm:w-16
+            md:w-24
             lg:w-52
           "
         />
 
-        {/* =========================================================
+        {/* -------------------------------------------------------------------
             LINE ONE
-        ========================================================= */}
+        ------------------------------------------------------------------- */}
 
         {primaryCapabilities.length > 0 && (
           <TechnologyMarquee
@@ -439,12 +370,19 @@ const TechCapabilities = () => {
           />
         )}
 
-        {/* =========================================================
+        {/* -------------------------------------------------------------------
             LINE TWO
-        ========================================================= */}
+        ------------------------------------------------------------------- */}
 
         {secondaryCapabilities.length > 0 && (
-          <div className="mt-5 sm:mt-7 lg:mt-8">
+          <div
+            className="
+              mt-4
+              sm:mt-5
+              md:mt-6
+              lg:mt-8
+            "
+          >
             <TechnologyMarquee
               items={secondaryCapabilities}
               direction="right"
@@ -454,12 +392,25 @@ const TechCapabilities = () => {
         )}
       </div>
 
-      {/* =========================================================
+      {/* =====================================================================
           LOWER META
-      ========================================================= */}
+      ===================================================================== */}
 
-      <div className="relative z-10 mx-auto mt-16 max-w-[1600px] px-6 sm:mt-20 sm:px-10 lg:mt-24 lg:px-16">
-        <div className="flex items-center gap-5">
+      <div
+        className="
+          relative
+          z-10
+          mx-auto
+          mt-14
+          max-w-[1600px]
+          px-5
+          sm:mt-18
+          sm:px-8
+          lg:mt-24
+          lg:px-16
+        "
+      >
+        <div className="flex items-center gap-3 sm:gap-5">
           <span
             aria-hidden="true"
             className="
@@ -472,11 +423,13 @@ const TechCapabilities = () => {
           <span
             className="
               whitespace-nowrap
-              text-[9px]
+              text-[7px]
               uppercase
-              tracking-[0.28em]
+              tracking-[0.22em]
               text-[#6F6B63]
-              sm:text-[10px]
+              sm:text-[9px]
+              sm:tracking-[0.28em]
+              lg:text-[10px]
             "
           >
             Digital · Technology · Innovation
@@ -496,47 +449,209 @@ const TechCapabilities = () => {
   );
 };
 
-/* ===============================================================
+/* ============================================================================
    TECHNOLOGY MARQUEE
-================================================================ */
+============================================================================ */
 
 const TechnologyMarquee = ({ items, direction = "left", duration = 35 }) => {
+  const [paused, setPaused] = useState(false);
+
+  const x = useMotionValue(0);
+
+  const trackRef = useRef(null);
+  const segmentWidthRef = useRef(0);
+  const initializedRef = useRef(false);
+  const resizeFrameRef = useRef(null);
+
+  const isRight = direction === "right";
+
+  /* --------------------------------------------------------------------------
+     MEASURE
+  -------------------------------------------------------------------------- */
+
+  useEffect(() => {
+    const measure = () => {
+      const track = trackRef.current;
+
+      if (!track) {
+        return;
+      }
+
+      /*
+       * The track contains exactly 3 copies:
+       *
+       * [COPY 1][COPY 2][COPY 3]
+       *
+       * Therefore:
+       *
+       * total width / 3 = one complete segment
+       */
+
+      const width = track.scrollWidth / 3;
+
+      if (!width || !Number.isFinite(width)) {
+        return;
+      }
+
+      const previousWidth = segmentWidthRef.current;
+
+      segmentWidthRef.current = width;
+
+      /* Initial position */
+
+      if (!initializedRef.current) {
+        x.set(isRight ? -width : 0);
+        initializedRef.current = true;
+        return;
+      }
+
+      /*
+       * Preserve the current relative position if the viewport
+       * changes from mobile -> tablet -> desktop etc.
+       */
+
+      if (previousWidth > 0 && previousWidth !== width) {
+        const current = x.get();
+
+        const progress = Math.abs(current) / previousWidth;
+        const normalizedProgress = progress % 1;
+
+        if (isRight) {
+          x.set(-width + width * normalizedProgress);
+        } else {
+          x.set(-width * normalizedProgress);
+        }
+      }
+    };
+
+    const scheduleMeasure = () => {
+      if (resizeFrameRef.current !== null) {
+        cancelAnimationFrame(resizeFrameRef.current);
+      }
+
+      resizeFrameRef.current = requestAnimationFrame(() => {
+        resizeFrameRef.current = null;
+        measure();
+      });
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(scheduleMeasure);
+
+    if (trackRef.current) {
+      observer.observe(trackRef.current);
+    }
+
+    window.addEventListener("resize", scheduleMeasure, {
+      passive: true,
+    });
+
+    return () => {
+      observer.disconnect();
+
+      window.removeEventListener("resize", scheduleMeasure);
+
+      if (resizeFrameRef.current !== null) {
+        cancelAnimationFrame(resizeFrameRef.current);
+      }
+    };
+  }, [isRight, x]);
+
+  /* --------------------------------------------------------------------------
+     SMOOTH RESPONSIVE ANIMATION
+  -------------------------------------------------------------------------- */
+
+  useAnimationFrame((_, delta) => {
+    if (paused) {
+      return;
+    }
+
+    const segmentWidth = segmentWidthRef.current;
+
+    if (!segmentWidth) {
+      return;
+    }
+
+    /*
+     * Responsive speed:
+     *
+     * Mobile  < 640px  = 1.8x
+     * Tablet  < 1024px = 1.4x
+     * Desktop          = 1x
+     */
+
+    const viewportWidth = window.innerWidth;
+
+    let speedMultiplier = 1;
+
+    if (viewportWidth < 640) {
+      speedMultiplier = 1.8;
+    } else if (viewportWidth < 1024) {
+      speedMultiplier = 1.4;
+    }
+
+    const effectiveDuration = duration / speedMultiplier;
+    const pixelsPerMillisecond = segmentWidth / (effectiveDuration * 1000);
+
+    let currentX = x.get();
+
+    if (isRight) {
+      currentX += delta * pixelsPerMillisecond;
+
+      /*
+       * Seamless wrap.
+       */
+
+      if (currentX >= 0) {
+        currentX -= segmentWidth;
+      }
+    } else {
+      currentX -= delta * pixelsPerMillisecond;
+
+      /*
+       * Seamless wrap.
+       */
+
+      if (currentX <= -segmentWidth) {
+        currentX += segmentWidth;
+      }
+    }
+
+    x.set(currentX);
+  });
+
   if (!items.length) {
     return null;
   }
 
   /*
-   * Three copies provide enough physical width for the
-   * marquee to remain seamless on very large screens.
+   * Three copies:
+   *
+   * [COPY 1][COPY 2][COPY 3]
    */
 
-  const scrollingItems = [...items, ...items, ...items];
-
-  const isRight = direction === "right";
+  const scrollingItems = useMemo(() => [...items, ...items, ...items], [items]);
 
   return (
     <div className="relative overflow-hidden">
       <motion.div
-        className="flex w-max items-center"
-        initial={{
-          x: isRight ? "-33.333%" : "0%",
-        }}
-        animate={{
-          x: isRight ? ["-33.333%", "0%"] : ["0%", "-33.333%"],
-        }}
-        transition={{
-          x: {
-            duration,
-            repeat: Infinity,
-            repeatType: "loop",
-            ease: "linear",
-          },
+        ref={trackRef}
+        className="
+          flex
+          w-max
+          items-center
+          will-change-transform
+        "
+        style={{
+          x,
         }}
       >
         {scrollingItems.map((item, index) => (
           <TechnologyItem
             key={`${item._id || item.title}-${index}`}
             item={item}
+            onHoverChange={setPaused}
           />
         ))}
       </motion.div>
@@ -544,20 +659,35 @@ const TechnologyMarquee = ({ items, direction = "left", duration = 35 }) => {
   );
 };
 
-/* ===============================================================
+/* ============================================================================
    TECHNOLOGY ITEM
-================================================================ */
+============================================================================ */
 
-const TechnologyItem = ({ item }) => {
+const TechnologyItem = ({ item, onHoverChange }) => {
   const [hovered, setHovered] = useState(false);
 
   const title = typeof item.title === "string" ? item.title.trim() : "";
-
   const icon = typeof item.icon === "string" ? item.icon.trim() : "";
+
+  const optimizedIcon = useMemo(() => optimizeCloudinaryUrl(icon, 144), [icon]);
 
   if (!title) {
     return null;
   }
+
+  /* --------------------------------------------------------------------------
+     HOVER
+  -------------------------------------------------------------------------- */
+
+  const handleMouseEnter = () => {
+    setHovered(true);
+    onHoverChange?.(true);
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    onHoverChange?.(false);
+  };
 
   return (
     <motion.div
@@ -565,23 +695,23 @@ const TechnologyItem = ({ item }) => {
         group
         relative
         flex
-        h-[118px]
-        w-[245px]
+        h-[100px]
+        w-[190px]
         shrink-0
         items-center
         justify-center
-        px-6
-
-        sm:h-[138px]
-        sm:w-[300px]
-        sm:px-8
-
+        px-4
+        sm:h-[115px]
+        sm:w-[235px]
+        sm:px-5
+        md:h-[125px]
+        md:w-[270px]
         lg:h-[158px]
         lg:w-[360px]
         lg:px-10
       "
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       whileHover={{
         scale: 1.025,
       }}
@@ -590,22 +720,24 @@ const TechnologyItem = ({ item }) => {
         ease: [0.16, 1, 0.3, 1],
       }}
     >
-      {/* =========================================================
-          SUBTLE TOP LINE
-      ========================================================= */}
+      {/* =====================================================================
+          TOP LINE
+      ===================================================================== */}
 
       <motion.span
         aria-hidden="true"
         className="
           pointer-events-none
           absolute
-          left-8
-          right-8
+          left-5
+          right-5
           top-0
           h-px
           bg-[#292722]
-          sm:left-10
-          sm:right-10
+          sm:left-6
+          sm:right-6
+          md:left-8
+          md:right-8
           lg:left-12
           lg:right-12
         "
@@ -617,26 +749,37 @@ const TechnologyItem = ({ item }) => {
         }}
       />
 
-      {/* =========================================================
+      {/* =====================================================================
           CONTENT
-      ========================================================= */}
+      ===================================================================== */}
 
-      <div className="flex items-center gap-5 sm:gap-6 lg:gap-7">
-        {/* ICON */}
+      <div
+        className="
+          flex
+          items-center
+          gap-3
+          sm:gap-4
+          md:gap-5
+          lg:gap-7
+        "
+      >
+        {/* -------------------------------------------------------------------
+            ICON
+        ------------------------------------------------------------------- */}
 
         <motion.div
           className="
             relative
             flex
-            h-14
-            w-14
+            h-10
+            w-10
             shrink-0
             items-center
             justify-center
-
-            sm:h-16
-            sm:w-16
-
+            sm:h-12
+            sm:w-12
+            md:h-14
+            md:w-14
             lg:h-[72px]
             lg:w-[72px]
           "
@@ -648,7 +791,7 @@ const TechnologyItem = ({ item }) => {
             ease: [0.16, 1, 0.3, 1],
           }}
         >
-          {/* Outer subtle ring */}
+          {/* Outer ring */}
 
           <motion.span
             aria-hidden="true"
@@ -663,6 +806,9 @@ const TechnologyItem = ({ item }) => {
               borderColor: hovered
                 ? "rgba(201,166,107,0.55)"
                 : "rgba(41,39,34,1)",
+              boxShadow: hovered
+                ? "0 0 18px rgba(201,166,107,0.22), 0 0 42px rgba(201,166,107,0.08)"
+                : "0 0 0 rgba(201,166,107,0)",
             }}
             transition={{
               duration: 0.5,
@@ -671,41 +817,62 @@ const TechnologyItem = ({ item }) => {
 
           {/* Inner ring */}
 
-          <span
+          <motion.span
             aria-hidden="true"
             className="
               absolute
-              inset-[6px]
+              inset-[4px]
               rounded-full
               border
               border-[#292722]/50
+              sm:inset-[5px]
+              lg:inset-[6px]
             "
+            animate={{
+              borderColor: hovered
+                ? "rgba(201,166,107,0.32)"
+                : "rgba(41,39,34,0.5)",
+              boxShadow: hovered
+                ? "0 0 14px rgba(201,166,107,0.16)"
+                : "0 0 0 rgba(201,166,107,0)",
+            }}
+            transition={{
+              duration: 0.5,
+            }}
           />
 
-          {icon ? (
+          {/* Icon */}
+
+          {optimizedIcon ? (
             <motion.img
-              src={icon}
+              src={optimizedIcon}
               alt=""
               loading="lazy"
+              decoding="async"
+              width={144}
+              height={144}
               className="
                 relative
                 z-10
-                h-7
-                w-7
+                h-5
+                w-5
                 object-contain
-                opacity-55
-                grayscale
-                sm:h-8
-                sm:w-8
+                sm:h-6
+                sm:w-6
+                md:h-7
+                md:w-7
                 lg:h-9
                 lg:w-9
               "
               animate={{
-                opacity: hovered ? 1 : 0.55,
-                filter: hovered ? "grayscale(0)" : "grayscale(1)",
+                scale: hovered ? 1.08 : 1,
+                filter: hovered
+                  ? "drop-shadow(0 0 8px rgba(201,166,107,0.55)) drop-shadow(0 0 20px rgba(201,166,107,0.22))"
+                  : "drop-shadow(0 0 5px rgba(201,166,107,0.28))",
               }}
               transition={{
                 duration: 0.5,
+                ease: [0.16, 1, 0.3, 1],
               }}
             />
           ) : (
@@ -714,14 +881,18 @@ const TechnologyItem = ({ item }) => {
               className="
                 relative
                 z-10
-                h-2
-                w-2
+                h-1.5
+                w-1.5
                 rounded-full
                 bg-[#C9A66B]
+                sm:h-2
+                sm:w-2
               "
               animate={{
                 scale: hovered ? 1.5 : 1,
-                opacity: hovered ? 1 : 0.55,
+                boxShadow: hovered
+                  ? "0 0 10px rgba(201,166,107,0.8), 0 0 28px rgba(201,166,107,0.35)"
+                  : "0 0 8px rgba(201,166,107,0.55)",
               }}
               transition={{
                 duration: 0.4,
@@ -730,20 +901,21 @@ const TechnologyItem = ({ item }) => {
           )}
         </motion.div>
 
-        {/* TITLE */}
+        {/* -------------------------------------------------------------------
+            TITLE
+        ------------------------------------------------------------------- */}
 
         <div className="min-w-0">
           <motion.p
             className="
               whitespace-nowrap
-              text-lg
+              text-[13px]
               font-medium
-              tracking-[-0.025em]
+              tracking-[-0.02em]
               text-[#F5F3EE]
-
-              sm:text-xl
-
-              lg:text-2xl
+              sm:text-base
+              md:text-lg
+              lg:text-xl
             "
             animate={{
               x: hovered ? 5 : 0,
@@ -757,12 +929,15 @@ const TechnologyItem = ({ item }) => {
             {title}
           </motion.p>
 
+          {/* Hover underline */}
+
           <motion.span
             className="
-              mt-1.5
+              mt-1
               block
               h-px
               bg-[#C9A66B]
+              sm:mt-1.5
             "
             initial={{
               width: 0,
@@ -780,9 +955,9 @@ const TechnologyItem = ({ item }) => {
         </div>
       </div>
 
-      {/* =========================================================
+      {/* =====================================================================
           BOTTOM LINE
-      ========================================================= */}
+      ===================================================================== */}
 
       <motion.span
         aria-hidden="true"
@@ -790,12 +965,14 @@ const TechnologyItem = ({ item }) => {
           pointer-events-none
           absolute
           bottom-0
-          left-8
-          right-8
+          left-5
+          right-5
           h-px
           bg-[#292722]
-          sm:left-10
-          sm:right-10
+          sm:left-6
+          sm:right-6
+          md:left-8
+          md:right-8
           lg:left-12
           lg:right-12
         "

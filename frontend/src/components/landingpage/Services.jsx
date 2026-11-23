@@ -1,1360 +1,610 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  motion,
-  useMotionValue,
-  useScroll,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+  ChevronLeft,
+  ChevronRight,
+  Code2,
+  Megaphone,
+  PenLine,
+  Search,
+  Share2,
+  Target,
+} from "lucide-react";
 
 import api_url from "../../config/api";
 
-const FALLBACK_SERVICES = [
+const SERVICES_ENDPOINT = `${api_url}/api/website/services`;
+
+const AMBIENT_ICONS = [
   {
-    title: "Development & Creation",
-    shortDescription:
-      "Beautiful, fast and responsive digital experiences built to turn attention into action.",
-    icon: "",
-    features: [
-      "Website Development",
-      "Web App Development",
-      "Mobile App Development",
-      "E-Commerce Solution",
-      "Photography & Videography",
-      "Graphics Designing",
-      "Branding & Designing",
-    ],
+    Icon: Share2,
+    left: "7%",
+    top: "32%",
+    size: 68,
+    delay: "0.4s",
+    duration: "5.2s",
+    rotate: "-8deg",
+  },
+  {
+    Icon: Target,
+    left: "21%",
+    top: "10%",
+    size: 82,
+    delay: "1.8s",
+    duration: "5.8s",
+    rotate: "7deg",
+  },
+  {
+    Icon: PenLine,
+    left: "37%",
+    top: "65%",
+    size: 64,
+    delay: "2.5s",
+    duration: "6.1s",
+    rotate: "-12deg",
+  },
+  {
+    Icon: Megaphone,
+    left: "55%",
+    top: "29%",
+    size: 78,
+    delay: "0.9s",
+    duration: "5.5s",
+    rotate: "8deg",
+  },
+  {
+    Icon: Search,
+    left: "71%",
+    top: "74%",
+    size: 68,
+    delay: "2.1s",
+    duration: "6.3s",
+    rotate: "-6deg",
+  },
+  {
+    Icon: Code2,
+    left: "88%",
+    top: "16%",
+    size: 80,
+    delay: "1.2s",
+    duration: "5.9s",
+    rotate: "10deg",
+  },
+  {
+    Icon: Share2,
+    left: "92%",
+    top: "56%",
+    size: 58,
+    delay: "3s",
+    duration: "6.5s",
+    rotate: "-10deg",
+  },
+  {
+    Icon: Target,
+    left: "13%",
+    top: "85%",
+    size: 58,
+    delay: "1.5s",
+    duration: "6.2s",
+    rotate: "5deg",
   },
 ];
 
-/* -------------------------------------------------------------------------- */
-/* SERVICES BACKGROUND                                                        */
-/* -------------------------------------------------------------------------- */
+const optimizeCloudinaryUrl = (url, width) => {
+  if (!url || !url.includes("res.cloudinary.com")) return url;
+
+  const transformation = `f_auto,q_auto,dpr_auto,w_${width}`;
+
+  if (url.includes("/upload/")) {
+    return url.replace("/upload/", `/upload/${transformation}/`);
+  }
+
+  return url;
+};
 
 function ServicesBackground() {
-  const sectionRef = useRef(null);
-
-  const cursorX = useMotionValue(-500);
-  const cursorY = useMotionValue(-500);
-
-  const smoothX = useSpring(cursorX, {
-    stiffness: 80,
-    damping: 25,
-    mass: 0.6,
-  });
-
-  const smoothY = useSpring(cursorY, {
-    stiffness: 80,
-    damping: 25,
-    mass: 0.6,
-  });
-
-  useEffect(() => {
-    const handlePointerMove = (event) => {
-      const rect = sectionRef.current?.getBoundingClientRect();
-
-      if (!rect) {
-        return;
-      }
-
-      cursorX.set(event.clientX - rect.left);
-      cursorY.set(event.clientY - rect.top);
-    };
-
-    const element = sectionRef.current;
-
-    if (!element) {
-      return undefined;
-    }
-
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
-
-    if (finePointer) {
-      element.addEventListener("pointermove", handlePointerMove);
-    }
-
-    return () => {
-      if (finePointer) {
-        element.removeEventListener("pointermove", handlePointerMove);
-      }
-    };
-  }, [cursorX, cursorY]);
-
   return (
     <div
-      ref={sectionRef}
-      className="
-        pointer-events-none
-        absolute
-        inset-0
-        z-0
-        overflow-hidden
-      "
+      className="pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden="true"
     >
-      <motion.div
-        className="
-          absolute
-          h-[100px]
-          w-[100px]
-          -translate-x-1/2
-          -translate-y-1/2
-          rounded-full
-          border
-          border-[#c9a66b]/20
-          blur-[1px]
-        "
-        style={{
-          left: smoothX,
-          top: smoothY,
-        }}
-      />
-
-      <motion.div
-        animate={{
-          scale: [1, 1.12, 1],
-          opacity: [0.12, 0.25, 0.12],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="
-          absolute
-          -left-24
-          top-[12%]
-          h-[280px]
-          w-[280px]
-          rounded-full
-          bg-[#c9a66b]/10
-          blur-[90px]
-        "
-      />
-
-      <motion.div
-        animate={{
-          scale: [1, 1.15, 1],
-          opacity: [0.08, 0.2, 0.08],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1.5,
-        }}
-        className="
-          absolute
-          -right-24
-          top-[42%]
-          h-[340px]
-          w-[340px]
-          rounded-full
-          bg-[#9a7442]/10
-          blur-[100px]
-        "
-      />
-
       <div
-        className="
-          absolute
-          inset-0
-          opacity-[0.13]
-        "
+        className="absolute inset-0 opacity-[0.045]"
         style={{
           backgroundImage: `
-            linear-gradient(
-              rgba(154,116,66,0.22) 1px,
-              transparent 1px
-            ),
-            linear-gradient(
-              90deg,
-              rgba(154,116,66,0.22) 1px,
-              transparent 1px
-            )
+            linear-gradient(rgba(201,166,107,0.45) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(201,166,107,0.45) 1px, transparent 1px)
           `,
           backgroundSize: "90px 90px",
           maskImage:
-            "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)",
+            "linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)",
           WebkitMaskImage:
-            "linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)",
+            "linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)",
         }}
       />
 
-      <motion.div
-        animate={{
-          rotate: 360,
-        }}
-        transition={{
-          duration: 45,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="
-          absolute
-          left-[8%]
-          top-[18%]
-          h-[260px]
-          w-[260px]
-          rounded-full
-          border
-          border-[#c9a66b]/15
-        "
-      >
-        <span
-          className="
-            absolute
-            left-1/2
-            top-[-3px]
-            h-[6px]
-            w-[6px]
-            -translate-x-1/2
-            rounded-full
-            bg-[#c9a66b]
-            shadow-[0_0_18px_rgba(201,166,107,0.75)]
-          "
-        />
-      </motion.div>
+      <div className="absolute left-[10%] top-[10%] h-[420px] w-[420px] rounded-full bg-[#c9a66b]/[0.025] blur-[110px]" />
 
-      <motion.div
-        animate={{
-          rotate: -360,
-        }}
-        transition={{
-          duration: 55,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="
-          absolute
-          right-[8%]
-          bottom-[15%]
-          h-[340px]
-          w-[340px]
-          rounded-full
-          border
-          border-[#9a7442]/10
-        "
-      >
-        <span
-          className="
-            absolute
-            right-[8%]
-            top-1/2
-            h-[5px]
-            w-[5px]
-            rounded-full
-            bg-[#9a7442]
-            shadow-[0_0_15px_rgba(154,116,66,0.7)]
-          "
-        />
-      </motion.div>
+      <div className="absolute bottom-[5%] right-[5%] h-[400px] w-[400px] rounded-full bg-[#9a7442]/[0.02] blur-[120px]" />
 
-      {[
-        {
-          left: "12%",
-          top: "52%",
-          delay: 0,
-        },
-        {
-          left: "83%",
-          top: "21%",
-          delay: 1.2,
-        },
-        {
-          left: "76%",
-          top: "76%",
-          delay: 2.1,
-        },
-        {
-          left: "23%",
-          top: "82%",
-          delay: 0.8,
-        },
-      ].map((mark, index) => (
-        <motion.div
-          key={`cross-${index}`}
-          className="absolute"
-          style={{
-            left: mark.left,
-            top: mark.top,
-          }}
-          animate={{
-            opacity: [0.25, 0.8, 0.25],
-            scale: [0.85, 1.15, 0.85],
-          }}
-          transition={{
-            duration: 3.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: mark.delay,
-          }}
-        >
-          <span
-            className="
-              absolute
-              left-1/2
-              top-0
-              h-8
-              w-px
-              -translate-x-1/2
-              bg-[#c9a66b]
-            "
-          />
+      {AMBIENT_ICONS.map(
+        ({ Icon, left, top, size, delay, duration, rotate }, index) => (
+          <div
+            key={`ambient-icon-${index}`}
+            className="services-ambient-icon absolute flex items-center justify-center text-[#c9a66b] opacity-[0.08] drop-shadow-[0_0_16px_rgba(201,166,107,0.14)]"
+            style={{
+              left,
+              top,
+              animationDelay: delay,
+              animationDuration: duration,
+              transform: `rotate(${rotate})`,
+            }}
+          >
+            <Icon size={size} strokeWidth={1.15} />
+          </div>
+        ),
+      )}
 
-          <span
-            className="
-              absolute
-              left-0
-              top-1/2
-              h-px
-              w-8
-              -translate-y-1/2
-              bg-[#c9a66b]
-            "
-          />
+      <style>{`
+        @keyframes servicesAmbientIconPulse {
+          0%, 100% {
+            opacity: 0.055;
+            transform: translate3d(0, 0, 0) scale(0.92) rotate(0deg);
+            filter: drop-shadow(0 0 0 rgba(201,166,107,0));
+          }
 
-          <span className="block h-8 w-8" />
-        </motion.div>
-      ))}
+          50% {
+            opacity: 0.22;
+            transform: translate3d(0, -7px, 0) scale(1) rotate(2deg);
+            filter: drop-shadow(0 0 18px rgba(201,166,107,0.24));
+          }
+        }
 
-      <div
-        className="
-          absolute
-          left-[4%]
-          top-[35%]
-          hidden
-          rotate-90
-          text-[7px]
-          font-semibold
-          uppercase
-          tracking-[0.4em]
-          text-[#9a7442]/35
-          lg:block
-        "
-      >
-        Strategy / Design / Technology
-      </div>
+        .services-ambient-icon {
+          animation: servicesAmbientIconPulse 5.8s ease-in-out infinite;
+        }
 
-      <div
-        className="
-          absolute
-          right-[4%]
-          top-[60%]
-          hidden
-          -rotate-90
-          text-[7px]
-          font-semibold
-          uppercase
-          tracking-[0.4em]
-          text-[#9a7442]/35
-          lg:block
-        "
-      >
-        Create / Build / Scale
-      </div>
+        @media (prefers-reduced-motion: reduce) {
+          .services-ambient-icon {
+            animation: none;
+            opacity: 0.09;
+            transform: none;
+            filter: none;
+          }
+        }
 
-      <svg
-        className="
-          absolute
-          inset-0
-          h-full
-          w-full
-          opacity-[0.18]
-        "
-        viewBox="0 0 1440 1000"
-        preserveAspectRatio="none"
-      >
-        <path
-          d="M0 280 C240 180 320 430 560 330 S950 80 1440 240"
-          fill="none"
-          stroke="#9a7442"
-          strokeWidth="1"
-        />
-
-        <path
-          d="M0 760 C280 650 390 840 650 700 S1090 530 1440 680"
-          fill="none"
-          stroke="#c9a66b"
-          strokeWidth="1"
-        />
-
-        <path
-          d="M120 0 C210 230 160 430 300 600 S510 850 690 1000"
-          fill="none"
-          stroke="#9a7442"
-          strokeWidth="0.7"
-        />
-
-        <path
-          d="M1310 0 C1200 220 1280 390 1130 570 S940 820 850 1000"
-          fill="none"
-          stroke="#c9a66b"
-          strokeWidth="0.7"
-        />
-      </svg>
-
-      {[
-        ["18%", "27%", 0],
-        ["72%", "30%", 0.7],
-        ["38%", "68%", 1.4],
-        ["88%", "62%", 2.2],
-        ["58%", "84%", 1.1],
-      ].map(([left, top, delay], index) => (
-        <motion.div
-          key={`point-${index}`}
-          style={{
-            left,
-            top,
-          }}
-          animate={{
-            scale: [0.7, 1.4, 0.7],
-            opacity: [0.25, 0.8, 0.25],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay,
-          }}
-          className="
-            absolute
-            h-[5px]
-            w-[5px]
-            rounded-full
-            bg-[#c9a66b]
-            shadow-[0_0_14px_rgba(201,166,107,0.6)]
-          "
-        />
-      ))}
+        @media (max-width: 640px) {
+          .services-ambient-icon {
+            opacity: 0.045;
+          }
+        }
+      `}</style>
     </div>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* HEADING                                                                    */
-/* -------------------------------------------------------------------------- */
+function TabIcon({ icon, title, active }) {
+  if (!icon) return null;
 
-function HeadingReveal() {
-  const words = ["Services", "that", "move", "the", "brand", "forward."];
+  const optimizedIcon = optimizeCloudinaryUrl(icon, 120);
 
   return (
     <div
-      className="
-        relative
-        z-10
-        mx-auto
-        w-full
-        max-w-[1500px]
-        px-6
-        sm:px-10
-        lg:px-16
-      "
+      className={`
+        relative flex h-[48px] w-[48px] shrink-0 items-center justify-center
+        overflow-hidden rounded-[14px] border p-2.5 transition-all duration-300
+        sm:h-[52px] sm:w-[52px] sm:rounded-[15px]
+        ${
+          active
+            ? "border-[#c9a66b]/40 bg-transparent shadow-[0_0_20px_rgba(201,166,107,0.13)]"
+            : "border-white/[0.09] bg-transparent group-hover:border-[#c9a66b]/25"
+        }
+      `}
     >
-      <div className="overflow-hidden">
-        <motion.h2
-          initial={{
-            y: "110%",
-          }}
-          animate={{
-            y: 0,
-          }}
-          transition={{
-            duration: 1,
-            delay: 0.35,
-            ease: [0.16, 1, 0.3, 1],
-          }}
-          className="
-            flex
-            flex-wrap
-            gap-x-[0.2em]
-            font-serif
-            text-[clamp(48px,8vw,128px)]
-            leading-[0.86]
-            tracking-[-0.055em]
-            text-[#171814]
-          "
-        >
-          {words.map((word, index) => (
-            <span
-              key={`${word}-${index}`}
-              className="
-                inline-block
-                overflow-visible
-                pb-[0.08em]
-              "
-            >
-              <motion.span
-                initial={{
-                  y: "110%",
-                }}
-                animate={{
-                  y: 0,
-                }}
-                transition={{
-                  duration: 0.75,
-                  delay: 0.395 + index * 0.045,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="inline-block"
-              >
-                {word}
-              </motion.span>
-            </span>
-          ))}
-        </motion.h2>
-      </div>
-
-      <div className="mt-8 flex max-w-2xl items-start gap-5">
-        <span
-          className="
-            mt-[9px]
-            h-px
-            w-10
-            shrink-0
-            bg-[#c9a66b]
-          "
-        />
-
-        <p
-          className="
-            text-[12px]
-            leading-6
-            text-[#77736a]
-            sm:text-[13px]
-          "
-        >
-          Strategy, creativity and technology brought together to create work
-          people notice — and businesses can measure.
-        </p>
-      </div>
+      <img
+        src={optimizedIcon}
+        alt={title || ""}
+        loading="lazy"
+        decoding="async"
+        width="120"
+        height="120"
+        className="relative z-10 block h-full w-full object-contain object-center"
+      />
     </div>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* FEATURE ITEM                                                               */
-/* -------------------------------------------------------------------------- */
-
-function FeatureItem({ feature, featureProgress }) {
-  const y = useTransform(featureProgress, [0, 1], [18, 0]);
+function ServiceTab({ service, index, active, onClick, idPrefix = "service" }) {
+  const tabId = `${idPrefix}-tab-${index}`;
+  const panelId = `${idPrefix}-panel-${index}`;
 
   return (
-    <motion.div
-      style={{
-        y,
-      }}
-      className="
-        flex
-        items-start
-        gap-2
-        text-[11px]
-        leading-5
-        text-[#39362f]
-        will-change-transform
-        transform-gpu
-      "
+    <button
+      id={tabId}
+      type="button"
+      role="tab"
+      aria-selected={active}
+      aria-controls={panelId}
+      tabIndex={active ? 0 : -1}
+      onClick={onClick}
+      className={`
+        group relative flex min-h-[78px] min-w-[205px] shrink-0 items-center
+        gap-3 rounded-[16px] border px-4 py-3 text-left transition-all duration-300
+        md:min-w-[230px] md:min-h-[84px] md:px-5
+        lg:min-h-[104px] lg:min-w-0 lg:w-full lg:rounded-none lg:border-0
+        lg:border-b lg:px-7 lg:py-4
+        ${
+          active
+            ? "border-[#c9a66b]/55 bg-[#c9a66b]/[0.075] shadow-[0_0_24px_rgba(201,166,107,0.10)] lg:border-white/[0.07] lg:bg-white/[0.035]"
+            : "border-white/[0.08] bg-white/[0.012] hover:border-[#c9a66b]/30 hover:bg-white/[0.025] lg:border-white/[0.07] lg:bg-transparent"
+        }
+      `}
     >
       <span
-        className="
-          mt-[8px]
-          h-[4px]
-          w-[4px]
-          shrink-0
-          rounded-full
-          bg-[#9a7442]
-        "
+        className={`
+          absolute bottom-0 left-5 right-5 h-[2px] rounded-full bg-[#c9a66b]
+          shadow-[0_0_10px_rgba(201,166,107,0.75)] transition-all duration-300
+          lg:hidden ${active ? "opacity-100" : "opacity-0"}
+        `}
       />
 
-      <span>{feature}</span>
-    </motion.div>
+      <span
+        className={`
+          absolute left-0 top-0 hidden h-full w-[2px] bg-[#c9a66b]
+          shadow-[0_0_12px_rgba(201,166,107,0.7)] transition-opacity duration-300
+          lg:block ${active ? "opacity-100" : "opacity-0"}
+        `}
+      />
+
+      <TabIcon icon={service.icon} title={service.title} active={active} />
+
+      <div className="min-w-0 flex-1">
+        <div
+          className={`
+            mb-1 text-[8px] font-semibold uppercase tracking-[0.28em]
+            transition-colors duration-300 md:text-[9px]
+            ${
+              active
+                ? "text-[#c9a66b]"
+                : "text-[#66635d] group-hover:text-[#8d806c]"
+            }
+          `}
+        >
+          {String(index + 1).padStart(2, "0")}
+        </div>
+
+        <span
+          className={`
+            block truncate font-serif text-[16px] leading-[1.1] tracking-[-0.025em]
+            transition-colors duration-300 md:text-[18px] lg:text-[21px]
+            ${
+              active
+                ? "text-[#f1e8d8]"
+                : "text-[#858078] group-hover:text-[#c6baa7]"
+            }
+          `}
+        >
+          {service.title}
+        </span>
+
+        <span
+          className={`
+            mt-1.5 block text-[7px] font-semibold uppercase tracking-[0.22em]
+            text-[#c9a66b] transition-opacity duration-300 lg:hidden
+            ${active ? "opacity-100" : "opacity-0"}
+          `}
+        >
+          Selected
+        </span>
+      </div>
+
+      <span
+        className={`
+          hidden shrink-0 text-lg transition-all duration-300 lg:block
+          ${
+            active
+              ? "translate-x-0 text-[#c9a66b] opacity-100"
+              : "-translate-x-2 text-[#c9a66b] opacity-0 group-hover:translate-x-0 group-hover:opacity-70"
+          }
+        `}
+      >
+        →
+      </span>
+    </button>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* SERVICE FOLDER                                                             */
-/* -------------------------------------------------------------------------- */
+function BackgroundServiceIcon({ icon }) {
+  if (!icon) return null;
 
-function ServiceFolder({ service, index, total, progress, viewportWidth }) {
-  const segmentStart = index / total;
-  const segmentEnd = (index + 1) / total;
-
-  const segmentLength = segmentEnd - segmentStart;
-
-  const entranceEnd = segmentStart + segmentLength * 0.12;
-  const pageStart = segmentStart + segmentLength * 0.18;
-  const contentStart = segmentStart + segmentLength * 0.34;
-  const contentEnd = segmentStart + segmentLength * 0.48;
-  const holdStart = segmentStart + segmentLength * 0.48;
-  const holdEnd = segmentStart + segmentLength * 0.82;
-  const exitStart = segmentStart + segmentLength * 0.82;
-
-  const enteringFrom = "115vw";
-  const exitingTo = "-115vw";
-
-  const isPhone = viewportWidth < 640;
-  const isTablet = viewportWidth >= 640 && viewportWidth < 1024;
-  const isSmallScreen = isPhone || isTablet;
-
-  /*
-   * Keep the spring feel from the original animation, but make the
-   * response substantially faster on phone/tablet.
-   *
-   * Phone:
-   * - less mass
-   * - higher stiffness
-   * - enough damping to avoid visible bounce
-   *
-   * Tablet:
-   * - slightly more weight than phone
-   * - still considerably faster than desktop
-   *
-   * Desktop:
-   * - original smoother/heavier feel
-   */
-
-  const folderSpring = isPhone
-    ? {
-        stiffness: 150,
-        damping: 30,
-        mass: 0.52,
-      }
-    : isTablet
-      ? {
-          stiffness: 140,
-          damping: 29,
-          mass: 0.58,
-        }
-      : {
-          stiffness: 115,
-          damping: 28,
-          mass: 0.72,
-        };
-
-  const rotationSpring = isPhone
-    ? {
-        stiffness: 145,
-        damping: 31,
-        mass: 0.48,
-      }
-    : isTablet
-      ? {
-          stiffness: 135,
-          damping: 30,
-          mass: 0.52,
-        }
-      : {
-          stiffness: 110,
-          damping: 29,
-          mass: 0.68,
-        };
-
-  const pageSpring = isPhone
-    ? {
-        stiffness: 150,
-        damping: 31,
-        mass: 0.52,
-      }
-    : isTablet
-      ? {
-          stiffness: 140,
-          damping: 30,
-          mass: 0.58,
-        }
-      : {
-          stiffness: 110,
-          damping: 29,
-          mass: 0.72,
-        };
-
-  /* ---------------------------------------------------------------------- */
-  /* FOLDER POSITION                                                        */
-  /* ---------------------------------------------------------------------- */
-
-  const folderXRaw = useTransform(
-    progress,
-    [segmentStart, entranceEnd, holdStart, holdEnd, exitStart, segmentEnd],
-    [enteringFrom, "0vw", "0vw", "0vw", "0vw", exitingTo],
-  );
-
-  const folderX = useSpring(folderXRaw, folderSpring);
-
-  const folderRotateRaw = useTransform(
-    progress,
-    [segmentStart, entranceEnd, holdStart, holdEnd, segmentEnd],
-    [3, 0, 0, 0, -3],
-  );
-
-  const folderRotate = useSpring(folderRotateRaw, rotationSpring);
-
-  /* ---------------------------------------------------------------------- */
-  /* PAGE                                                                    */
-  /* ---------------------------------------------------------------------- */
-
-  const pageYRaw = useTransform(
-    progress,
-    [segmentStart, pageStart, contentStart, holdStart, holdEnd, segmentEnd],
-    ["70%", "30%", "0%", "0%", "0%", "70%"],
-  );
-
-  const pageY = useSpring(pageYRaw, pageSpring);
-
-  const pageScaleRaw = useTransform(
-    progress,
-    [segmentStart, pageStart, contentStart, holdStart, holdEnd, segmentEnd],
-    [0.88, 0.96, 1, 1, 1, 0.88],
-  );
-
-  const pageScale = useSpring(pageScaleRaw, pageSpring);
-
-  const pageRotateRaw = useTransform(
-    progress,
-    [segmentStart, pageStart, contentStart, holdStart, holdEnd, segmentEnd],
-    [3, 1, 0, 0, 0, -2.5],
-  );
-
-  const pageRotate = useSpring(pageRotateRaw, rotationSpring);
-
-  /* ---------------------------------------------------------------------- */
-  /* CONTENT                                                                 */
-  /* ---------------------------------------------------------------------- */
-
-  const contentY = useTransform(
-    progress,
-    [contentStart, contentEnd, holdStart, holdEnd, segmentEnd],
-    [35, 0, 0, 0, 35],
-  );
-
-  const featureProgress = useTransform(
-    progress,
-    [contentEnd, holdStart],
-    [0, 1],
-  );
+  const optimizedIcon = optimizeCloudinaryUrl(icon, 640);
 
   return (
-    <motion.article
-      style={{
-        x: folderX,
-        rotate: folderRotate,
-      }}
-      className="
-        pointer-events-none
-        absolute
-        left-1/2
-        top-1/2
-        h-[700px]
-        w-[min(94vw,900px)]
-        -translate-x-1/2
-        -translate-y-1/2
-        sm:h-[760px]
-        lg:h-[820px]
-        will-change-transform
-        transform-gpu
-      "
+    <div
+      className="pointer-events-none absolute -right-[90px] -top-[70px] z-0 h-[420px] w-[420px] opacity-[0.055] blur-[0.5px] sm:-right-[120px] sm:-top-[90px] sm:h-[520px] sm:w-[520px] lg:-right-[150px] lg:-top-[120px] lg:h-[620px] lg:w-[620px]"
+      aria-hidden="true"
     >
-      {/* FOLDER */}
+      <img
+        src={optimizedIcon}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        width="640"
+        height="640"
+        className="h-full w-full object-contain object-center"
+      />
+    </div>
+  );
+}
 
-      <div
-        className="
-          absolute
-          bottom-[1%]
-          left-1/2
-          h-[65%]
-          w-[98%]
-          -translate-x-1/2
-        "
-      >
-        <div
-          className="
-            absolute
-            left-[7%]
-            top-0
-            z-0
-            h-[92px]
-            w-[38%]
-            rounded-t-[30px]
-            bg-[#b3ac9f]
-            sm:h-[108px]
-          "
-        />
+function ServiceDescription({ service, index, idPrefix = "service" }) {
+  const panelId = `${idPrefix}-panel-${index}`;
+  const tabId = `${idPrefix}-tab-${index}`;
 
-        <div
-          className="
-            absolute
-            inset-0
-            overflow-hidden
-            rounded-[32px]
-            bg-[#aaa397]
-            shadow-[0_40px_100px_rgba(55,43,28,0.22)]
-          "
-        >
-          <div
-            className="
-              absolute
-              inset-x-0
-              top-0
-              h-[105px]
-              bg-[#bbb3a6]
-            "
-          />
+  return (
+    <div
+      id={panelId}
+      role="tabpanel"
+      aria-labelledby={tabId}
+      className="services-panel-enter relative flex min-h-[560px] flex-col overflow-hidden rounded-[26px] border border-[#c9a66b]/30 bg-white/[0.025] px-7 py-8 shadow-[0_0_35px_rgba(201,166,107,0.08)] backdrop-blur-[6px] sm:px-10 sm:py-10 lg:min-h-[620px] lg:px-14 lg:py-12"
+    >
+      <BackgroundServiceIcon icon={service.icon} />
 
-          <div
-            className="
-              absolute
-              inset-x-[7%]
-              top-[101px]
-              h-px
-              bg-[#8f693c]/55
-            "
-          />
+      <div className="services-panel-glow pointer-events-none absolute inset-[-1px] z-[1] rounded-[27px] border border-[#c9a66b]/20" />
 
-          <div
-            className="
-              absolute
-              right-8
-              top-8
-              h-6
-              w-6
-              rounded-full
-              border
-              border-[#9a7442]/35
-              sm:right-11
-            "
-          />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-px bg-gradient-to-r from-transparent via-white/[0.14] to-transparent" />
 
-          <div
-            className="
-              absolute
-              bottom-9
-              left-9
-              flex
-              items-center
-              gap-3
-              sm:left-12
-            "
-          >
-            <span
-              className="
-                h-[6px]
-                w-[6px]
-                rounded-full
-                bg-[#9a7442]
-                shadow-[0_0_12px_rgba(154,116,66,0.5)]
-              "
-            />
+      <div className="pointer-events-none absolute right-0 top-0 z-[3] h-px w-[55%] bg-gradient-to-l from-[#c9a66b]/50 to-transparent shadow-[0_0_12px_rgba(201,166,107,0.3)]" />
 
-            <span
-              className="
-                text-[9px]
-                font-semibold
-                uppercase
-                tracking-[0.3em]
-                text-[#4f493f]
-              "
-            >
-              Being IBAN Digital
-            </span>
+      <div className="relative z-10 flex h-full min-h-[504px] flex-col">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.34em] text-[#c9a66b] sm:text-[10px]">
+              Service / {String(index + 1).padStart(2, "0")}
+            </p>
+            <div className="mt-4 h-px w-12 bg-[#c9a66b] shadow-[0_0_8px_rgba(201,166,107,0.45)]" />
           </div>
 
-          <div
-            className="
-              absolute
-              bottom-7
-              right-9
-              font-serif
-              text-5xl
-              leading-none
-              text-[#806039]/55
-              sm:right-12
-              sm:text-6xl
-            "
-          >
+          <span className="font-serif text-4xl leading-none text-[#c9a66b]/12 sm:text-5xl">
             {String(index + 1).padStart(2, "0")}
-          </div>
+          </span>
         </div>
-      </div>
 
-      {/* PAGE */}
-
-      <motion.div
-        style={{
-          y: pageY,
-          scale: pageScale,
-          rotate: pageRotate,
-        }}
-        className="
-          absolute
-          left-1/2
-          top-[3%]
-          z-20
-          h-[91%]
-          w-[88%]
-          -translate-x-1/2
-          overflow-hidden
-          rounded-[9px]
-          bg-[#f5f2eb]
-          shadow-[0_40px_100px_rgba(35,28,18,0.22)]
-          sm:w-[80%]
-          lg:w-[72%]
-          will-change-transform
-          transform-gpu
-        "
-      >
-        <div
-          className="
-            absolute
-            inset-y-0
-            left-0
-            w-[5px]
-            bg-[#c9a66b]
-          "
-        />
-
-        <div
-          className="
-            absolute
-            left-8
-            right-8
-            top-9
-            h-px
-            bg-[#8d6c42]/20
-            sm:left-11
-            sm:right-11
-            sm:top-10
-          "
-        />
-
-        <motion.div
-          style={{
-            y: contentY,
-          }}
-          className="
-            relative
-            flex
-            h-full
-            flex-col
-            px-9
-            pb-9
-            pt-14
-            sm:px-12
-            sm:pt-16
-            lg:px-16
-            lg:pt-18
-            will-change-transform
-            transform-gpu
-          "
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <p
-                className="
-                  text-[9px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.32em]
-                  text-[#8a7355]
-                "
-              >
-                Service / {String(index + 1).padStart(2, "0")}
-              </p>
-
-              <div
-                className="
-                  mt-3
-                  h-px
-                  w-14
-                  bg-[#c9a66b]
-                "
-              />
-            </div>
-
-            <span
-              className="
-                font-serif
-                text-4xl
-                leading-none
-                text-[#9a7442]/55
-                sm:text-5xl
-              "
-            >
-              {String(index + 1).padStart(2, "0")}
-            </span>
-          </div>
-
-          <div
-            className="
-              mt-9
-              flex
-              h-[82px]
-              w-[82px]
-              shrink-0
-              items-center
-              justify-center
-              overflow-hidden
-              rounded-[20px]
-              border
-              border-[#9a7442]/25
-              bg-[#e8e2d7]
-              shadow-[0_14px_35px_rgba(80,60,35,0.12)]
-              sm:mt-11
-              sm:h-[92px]
-              sm:w-[92px]
-            "
-          >
-            {service.icon ? (
-              <img
-                src={service.icon}
-                alt=""
-                className="
-                  h-full
-                  w-full
-                  object-cover
-                "
-                loading="lazy"
-              />
-            ) : (
-              <span
-                className="
-                  font-serif
-                  text-4xl
-                  text-[#8d6b3e]
-                  sm:text-5xl
-                "
-              >
-                {service.title?.charAt(0) || "S"}
-              </span>
-            )}
-          </div>
-
-          <h3
-            className="
-              mt-8
-              max-w-[680px]
-              font-serif
-              text-[42px]
-              font-normal
-              leading-[0.94]
-              tracking-[-0.045em]
-              text-[#201f1b]
-              sm:mt-9
-              sm:text-[56px]
-              lg:text-[66px]
-            "
-          >
+        <div className="mt-12 max-w-[760px] lg:mt-16">
+          <h3 className="max-w-[720px] font-serif text-[40px] font-normal leading-[0.98] tracking-[-0.045em] text-[#f1e8d8] sm:text-[52px] lg:text-[64px]">
             {service.title}
           </h3>
 
-          <p
-            className="
-              mt-6
-              max-w-[570px]
-              text-[13px]
-              leading-6
-              text-[#69645b]
-              sm:mt-7
-              sm:text-[14px]
-              lg:text-[15px]
-            "
-          >
-            {service.shortDescription}
-          </p>
+          {service.shortDescription && (
+            <p className="mt-7 max-w-[620px] text-[14px] leading-7 text-[#aaa49a] sm:mt-8 sm:text-[15px] sm:leading-7">
+              {service.shortDescription}
+            </p>
+          )}
+        </div>
 
-          <div
-            className="
-              mt-auto
-              border-t
-              border-[#8f693c]/20
-              pt-6
-              sm:pt-7
-            "
-          >
-            <div
-              className="
-                mb-5
-                flex
-                items-center
-                justify-between
-              "
-            >
-              <p
-                className="
-                  text-[9px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.28em]
-                  text-[#8a7355]
-                "
-              >
+        {Array.isArray(service.features) && service.features.length > 0 && (
+          <div className="mt-auto pt-12">
+            <div className="mb-5 flex items-center gap-4">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[#c9a66b]/80">
                 What we deliver
               </p>
-
-              <span
-                className="
-                  h-px
-                  w-10
-                  bg-[#c9a66b]
-                "
-              />
+              <span className="h-px w-10 bg-[#c9a66b]/30 shadow-[0_0_6px_rgba(201,166,107,0.2)]" />
             </div>
 
-            <div
-              className="
-                grid
-                grid-cols-1
-                gap-x-10
-                gap-y-2.5
-                sm:grid-cols-2
-              "
-            >
-              {(service.features || []).map((feature, featureIndex) => (
-                <FeatureItem
+            <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
+              {service.features.map((feature, featureIndex) => (
+                <div
                   key={`${feature}-${featureIndex}`}
-                  feature={feature}
-                  featureProgress={featureProgress}
-                />
+                  className="flex items-center gap-3 text-[12px] leading-5 text-[#c2bdb3] sm:text-[13px]"
+                >
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#c9a66b]/50 text-[8px] text-[#c9a66b] shadow-[0_0_7px_rgba(201,166,107,0.15)]">
+                    ✓
+                  </span>
+                  <span>{feature}</span>
+                </div>
               ))}
             </div>
           </div>
+        )}
 
-          <div
-            className="
-              mt-6
-              flex
-              items-center
-              justify-between
-              border-t
-              border-[#8f693c]/10
-              pt-4
-            "
-          >
-            <span
-              className="
-                text-[8px]
-                uppercase
-                tracking-[0.24em]
-                text-[#9a9489]
-              "
-            >
-              Strategy / Creation / Growth
-            </span>
+        <div className="mt-10 flex items-center justify-between border-t border-white/[0.07] pt-5">
+          <span className="text-[8px] uppercase tracking-[0.28em] text-[#77736a]">
+            Strategy / Creation / Growth
+          </span>
+          <span className="text-[8px] uppercase tracking-[0.28em] text-[#77736a]">
+            Being IBAN Digital
+          </span>
+        </div>
+      </div>
 
-            <span
-              className="
-                text-[8px]
-                uppercase
-                tracking-[0.24em]
-                text-[#9a9489]
-              "
-            >
-              Being IBAN Digital
-            </span>
-          </div>
-        </motion.div>
-      </motion.div>
-    </motion.article>
+      <style>{`
+        @keyframes servicesPanelEnter {
+          from { opacity: 0; transform: translateY(7px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes servicesPanelGlow {
+          0%, 100% {
+            opacity: 0.30;
+            box-shadow: 0 0 18px rgba(201,166,107,0.04);
+          }
+          50% {
+            opacity: 0.75;
+            box-shadow: 0 0 32px rgba(201,166,107,0.10);
+          }
+        }
+
+        .services-panel-enter {
+          animation: servicesPanelEnter 220ms ease-out;
+        }
+
+        .services-panel-glow {
+          animation: servicesPanelGlow 4.5s ease-in-out infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .services-panel-enter,
+          .services-panel-glow {
+            animation: none;
+          }
+        }
+      `}</style>
+    </div>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* SERVICES TRACK                                                             */
-/* -------------------------------------------------------------------------- */
-
-function ServicesTrack({ services }) {
-  const trackRef = useRef(null);
-
-  const [viewportWidth, setViewportWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1280,
-  );
+function ServicesInterface({ services }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const desktopTabListRef = useRef(null);
+  const activeService = services[activeIndex];
 
   useEffect(() => {
-    const handleResize = () => {
-      setViewportWidth(window.innerWidth);
-    };
+    if (activeIndex === 0) return;
 
-    handleResize();
+    const container = desktopTabListRef.current;
+    if (!container) return;
 
-    window.addEventListener("resize", handleResize, {
-      passive: true,
-    });
+    const activeTab = container.querySelector('[aria-selected="true"]');
+    if (!activeTab) return;
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+    const containerRect = container.getBoundingClientRect();
+    const tabRect = activeTab.getBoundingClientRect();
 
-  const { scrollYProgress } = useScroll({
-    target: trackRef,
-    offset: ["start start", "end end"],
-  });
+    const delta =
+      tabRect.left +
+      tabRect.width / 2 -
+      (containerRect.left + containerRect.width / 2);
 
-  const serviceProgress = useTransform(scrollYProgress, [0, 0.86], [0, 1]);
+    if (Math.abs(delta) >= 1) {
+      container.scrollBy({ left: delta, behavior: "smooth" });
+    }
+  }, [activeIndex]);
 
-  const endBlackOpacity = useTransform(
-    scrollYProgress,
-    [0.82, 0.87, 0.92, 0.96, 1],
-    [0, 0.08, 0.28, 0.68, 1],
-  );
+  useEffect(() => {
+    if (activeIndex >= services.length) {
+      setActiveIndex(0);
+    }
+  }, [services.length, activeIndex]);
 
-  const scrollHeightPerService =
-    viewportWidth < 640 ? 190 : viewportWidth < 1024 ? 225 : 300;
+  if (!services.length || !activeService) return null;
+
+  const goToPrevious = () => {
+    setActiveIndex((current) =>
+      current === 0 ? services.length - 1 : current - 1,
+    );
+  };
+
+  const goToNext = () => {
+    setActiveIndex((current) =>
+      current === services.length - 1 ? 0 : current + 1,
+    );
+  };
 
   return (
-    <div
-      ref={trackRef}
-      className="relative"
-      style={{
-        minHeight: `${Math.max(
-          320,
-          services.length * scrollHeightPerService,
-        )}vh`,
-      }}
-    >
-      <div
-        className="
-          sticky
-          top-0
-          flex
-          h-screen
-          items-center
-          overflow-hidden
-          bg-white
-        "
-      >
-        <ServicesBackground />
+    <div className="relative min-h-screen overflow-hidden bg-[#080907] text-[#f1e8d8]">
+      <ServicesBackground />
 
-        <div
-          className="
-            pointer-events-none
-            absolute
-            left-6
-            right-6
-            top-7
-            z-50
-            flex
-            items-center
-            justify-between
-            sm:left-10
-            sm:right-10
-            lg:left-16
-            lg:right-16
-          "
-        >
-          <span
-            className="
-              text-[8px]
-              font-semibold
-              uppercase
-              tracking-[0.3em]
-              text-[#8a7355]
-            "
-          >
-            Our services
-          </span>
+      <div className="relative z-10 mx-auto w-full max-w-[1500px] px-6 py-24 sm:px-10 sm:py-32 lg:px-16 lg:py-40">
+        <div className="max-w-[850px]">
+          <div className="flex items-center gap-4">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.35em] text-[#c9a66b]">
+              Our Services
+            </span>
+            <span className="h-px w-14 bg-[#c9a66b]/50 shadow-[0_0_8px_rgba(201,166,107,0.25)]" />
+          </div>
 
-          <span
-            className="
-              text-[8px]
-              uppercase
-              tracking-[0.24em]
-              text-[#aaa49a]
-            "
-          >
-            Scroll to explore
-          </span>
+          <h2 className="mt-7 max-w-[850px] font-serif text-[52px] font-normal leading-[0.9] tracking-[-0.055em] text-[#f1e8d8] sm:text-[72px] lg:text-[100px]">
+            Solutions for
+            <br />a Digital World
+          </h2>
+
+          <p className="mt-8 max-w-[620px] text-[13px] leading-6 text-[#858179] sm:text-[14px] sm:leading-7">
+            From strategy to execution, we offer end-to-end digital services to
+            help your brand grow, engage, and stand out in a competitive
+            landscape.
+          </p>
         </div>
 
-        <div
-          className="
-            relative
-            z-10
-            h-full
-            w-full
-          "
-        >
-          {services.map((service, index) => (
-            <ServiceFolder
-              key={service._id || `${service.title}-${index}`}
-              service={service}
-              index={index}
-              total={services.length}
-              progress={serviceProgress}
-              viewportWidth={viewportWidth}
+        {/* The extra mobile service-tab row has been removed. */}
+
+        <div className="mt-24 hidden lg:grid lg:grid-cols-[minmax(280px,0.32fr)_minmax(0,0.68fr)] lg:gap-10">
+          <div
+            ref={desktopTabListRef}
+            role="tablist"
+            aria-label="Services"
+            className="self-start overflow-hidden rounded-[22px] border border-[#c9a66b]/20 bg-white/[0.025] shadow-[0_0_28px_rgba(201,166,107,0.035)] backdrop-blur-[6px] lg:sticky lg:top-10"
+          >
+            {services.map((service, index) => (
+              <ServiceTab
+                key={service._id || `${service.title}-${index}`}
+                service={service}
+                index={index}
+                active={index === activeIndex}
+                onClick={() => setActiveIndex(index)}
+                idPrefix="desktop-service"
+              />
+            ))}
+          </div>
+
+          <div className="min-w-0">
+            <ServiceDescription
+              key={activeService._id || activeService.title}
+              service={activeService}
+              index={activeIndex}
+              idPrefix="desktop-service"
             />
-          ))}
+          </div>
         </div>
 
-        <motion.div
-          aria-hidden="true"
-          style={{
-            opacity: endBlackOpacity,
-          }}
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[100]
-            bg-[#080907]
-            will-change-[opacity]
-          "
-        />
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            bottom-7
-            left-6
-            right-6
-            z-[110]
-            flex
-            items-center
-            justify-between
-            sm:left-10
-            sm:right-10
-            lg:left-16
-            lg:right-16
-          "
-        >
-          <span
-            className="
-              text-[8px]
-              uppercase
-              tracking-[0.24em]
-              text-[#aaa49a]
-            "
+        {/* Mobile previous/next controls are retained. */}
+        <div className="mt-6 flex items-center justify-between gap-3 lg:hidden">
+          <button
+            type="button"
+            onClick={goToPrevious}
+            aria-label="Previous service"
+            className="flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#77736a] transition-all duration-300 hover:border-[#c9a66b]/35 hover:text-[#c9a66b] active:scale-95"
           >
-            Being IBAN Digital
-          </span>
+            <ChevronLeft size={14} strokeWidth={1.5} />
+            Previous
+          </button>
 
-          <span
-            className="
-              text-[8px]
-              uppercase
-              tracking-[0.24em]
-              text-[#aaa49a]
-            "
+          <div className="h-px flex-1 bg-gradient-to-r from-[#c9a66b]/10 via-[#c9a66b]/30 to-[#c9a66b]/10" />
+
+          <button
+            type="button"
+            onClick={goToNext}
+            aria-label="Next service"
+            className="flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#77736a] transition-all duration-300 hover:border-[#c9a66b]/35 hover:text-[#c9a66b] active:scale-95"
           >
-            {String(services.length).padStart(2, "0")} Services
-          </span>
+            Next
+            <ChevronRight size={14} strokeWidth={1.5} />
+          </button>
+        </div>
+
+        {/* Mobile service description */}
+        <div className="mt-6 lg:hidden">
+          <ServiceDescription
+            key={activeService._id || activeService.title}
+            service={activeService}
+            index={activeIndex}
+            idPrefix="mobile-service"
+          />
         </div>
       </div>
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* MAIN                                                                       */
-/* -------------------------------------------------------------------------- */
 
 export default function Services() {
   const [services, setServices] = useState([]);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     const loadServices = async () => {
       try {
-        const response = await fetch(`${api_url}/api/website/services`);
+        const response = await fetch(SERVICES_ENDPOINT, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error(`Services request failed: ${response.status}`);
@@ -1370,62 +620,25 @@ export default function Services() {
               ? data.services
               : [];
 
-        if (!cancelled) {
-          setServices(nextServices);
-        }
+        setServices(nextServices);
       } catch (error) {
-        console.error("Services loading error:", error);
+        if (error?.name === "AbortError") return;
 
-        if (!cancelled) {
-          setServices(FALLBACK_SERVICES);
-        }
+        console.error("Services loading error:", error);
+        setServices([]);
       }
     };
 
     loadServices();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
-  const displayServices = services.length > 0 ? services : FALLBACK_SERVICES;
+  if (!services.length) return null;
 
   return (
-    <section
-      className="
-        relative
-        bg-white
-        text-[#171814]
-      "
-    >
-      <div
-        className="
-          relative
-          flex
-          min-h-[72vh]
-          items-center
-          bg-white
-          pt-40
-          pb-28
-          sm:min-h-[78vh]
-          sm:pt-52
-          sm:pb-36
-          lg:pt-[200px]
-        "
-      >
-        <HeadingReveal />
-      </div>
-
-      <ServicesTrack services={displayServices} />
-
-      <div
-        className="
-          min-h-[34vh]
-          bg-[#080907]
-        "
-        aria-hidden="true"
-      />
+    <section className="relative">
+      <ServicesInterface services={services} />
     </section>
   );
 }

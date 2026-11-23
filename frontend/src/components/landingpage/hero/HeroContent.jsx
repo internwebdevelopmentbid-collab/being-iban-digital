@@ -1,89 +1,25 @@
-import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { useState } from "react";
 
 import HeroBrandLogos from "./HeroBrandLogos";
 import GoldButton from "../../global/GoldButton";
 import OutlineButton from "../../global/OutlineButton";
 
-const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const EASE = [0.22, 1, 0.36, 1];
 
 const HeroContent = () => {
-  const [scrambledText, setScrambledText] = useState("Heart");
-  const scrambleTimerRef = useRef(null);
-  const intervalRef = useRef(null);
+  const [isHeartActive, setIsHeartActive] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    let mounted = true;
+  const smoothTransition = {
+    duration: shouldReduceMotion ? 0 : 0.45,
+    ease: EASE,
+  };
 
-    const runScramble = () => {
-      const target = "Heart";
-      const duration = 900;
-      const startTime = performance.now();
-
-      if (scrambleTimerRef.current) {
-        cancelAnimationFrame(scrambleTimerRef.current);
-      }
-
-      const animate = (currentTime) => {
-        if (!mounted) return;
-
-        const progress = Math.min((currentTime - startTime) / duration, 1);
-
-        const resolvedCharacters = Math.floor(progress * target.length);
-
-        const nextText = target
-          .split("")
-          .map((character, index) => {
-            if (index < resolvedCharacters) {
-              return character;
-            }
-
-            return SCRAMBLE_CHARS[
-              Math.floor(Math.random() * SCRAMBLE_CHARS.length)
-            ];
-          })
-          .join("");
-
-        setScrambledText(nextText);
-
-        if (progress < 1) {
-          scrambleTimerRef.current = requestAnimationFrame(animate);
-        } else {
-          setScrambledText(target);
-        }
-      };
-
-      scrambleTimerRef.current = requestAnimationFrame(animate);
-    };
-
-    /*
-     * First scramble happens after the hero has settled.
-     */
-    const initialTimeout = window.setTimeout(() => {
-      runScramble();
-    }, 2200);
-
-    /*
-     * Repeat occasionally rather than constantly.
-     */
-    intervalRef.current = window.setInterval(() => {
-      runScramble();
-    }, 9000);
-
-    return () => {
-      mounted = false;
-
-      window.clearTimeout(initialTimeout);
-
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-      }
-
-      if (scrambleTimerRef.current) {
-        cancelAnimationFrame(scrambleTimerRef.current);
-      }
-    };
-  }, []);
+  const iconTransition = {
+    duration: shouldReduceMotion ? 0 : 0.42,
+    ease: EASE,
+  };
 
   return (
     <div
@@ -97,8 +33,8 @@ const HeroContent = () => {
         items-start
       "
     >
-      {/* Eyebrow */}
-      <motion.div
+      {/* Eyebrow: visible immediately */}
+      <div
         className="
           mb-6
           flex
@@ -110,32 +46,16 @@ const HeroContent = () => {
           uppercase
           tracking-[0.32em]
           text-[#c9a66b]
-
           sm:mb-7
+          max-[550px]:mb-5
         "
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.7,
-          delay: 0.1,
-          ease: [0.22, 1, 0.36, 1],
-        }}
       >
-        <span
-          className="
-            h-px
-            w-8
-            bg-[#c9a66b]/70
-
-            sm:w-10
-          "
-        />
-
+        <span className="h-px w-8 bg-[#c9a66b]/70 sm:w-10" />
         <span>Being IBAN Digital</span>
-      </motion.div>
+      </div>
 
-      {/* Main heading */}
-      <motion.h1
+      {/* H1: visible immediately for faster LCP */}
+      <h1
         className="
           max-w-[820px]
           font-display
@@ -144,26 +64,133 @@ const HeroContent = () => {
           leading-[0.88]
           tracking-[-0.045em]
           text-[#f5f3ee]
+          max-[850px]:text-[clamp(3rem,8vw,5.8rem)]
+          max-[550px]:text-[clamp(2.8rem,12vw,4.5rem)]
         "
-        initial={{ opacity: 0, y: 35 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.95,
-          delay: 0.2,
-          ease: [0.22, 1, 0.36, 1],
-        }}
       >
         Reach the
         <br />
         <span className="whitespace-nowrap">
-          <span className="hero-heart">{scrambledText}</span> of your
+          <motion.span
+            role="button"
+            tabIndex={0}
+            aria-label="Toggle heart capsule"
+            aria-pressed={isHeartActive}
+            className="
+              relative
+              isolate
+              inline-block
+              cursor-pointer
+              select-none
+              align-baseline
+              outline-none
+              focus-visible:rounded-full
+              focus-visible:ring-2
+              focus-visible:ring-[#e4c17e]
+              focus-visible:ring-offset-4
+              focus-visible:ring-offset-[#111]
+            "
+            onPointerEnter={(event) => {
+              if (event.pointerType === "mouse") {
+                setIsHeartActive(true);
+              }
+            }}
+            onPointerLeave={(event) => {
+              if (event.pointerType === "mouse") {
+                setIsHeartActive(false);
+              }
+            }}
+            onPointerDown={(event) => {
+              if (event.pointerType === "touch") {
+                setIsHeartActive((current) => !current);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setIsHeartActive((current) => !current);
+              }
+            }}
+            style={{
+              WebkitTapHighlightColor: "transparent",
+              touchAction: "manipulation",
+              verticalAlign: "baseline",
+            }}
+          >
+            {/* Capsule background */}
+            <motion.span
+              aria-hidden="true"
+              className="
+                pointer-events-none
+                absolute
+                inset-0
+                rounded-full
+              "
+              initial={false}
+              animate={{
+                opacity: isHeartActive ? 1 : 0,
+                scale: isHeartActive ? 1 : 0.94,
+                boxShadow: isHeartActive
+                  ? "0 0 0 1px rgba(255,226,164,0.65), 0 0 0.28em rgba(201,166,107,0.25), inset 0 1px 0 rgba(255,255,255,0.3)"
+                  : "0 0 0 1px rgba(255,226,164,0), 0 0 0 rgba(201,166,107,0), inset 0 1px 0 rgba(255,255,255,0)",
+              }}
+              transition={smoothTransition}
+              style={{
+                background:
+                  "linear-gradient(135deg, #f4d99a 0%, #d8b568 42%, #b98a3f 100%)",
+              }}
+            />
+
+            {/* Word retains its original dimensions */}
+            <motion.span
+              className="hero-heart relative inline-block"
+              initial={false}
+              animate={{
+                opacity: isHeartActive ? 0 : 1,
+                scale: isHeartActive ? 0.94 : 1,
+                y: isHeartActive ? -2 : 0,
+              }}
+              transition={smoothTransition}
+            >
+              Heart
+            </motion.span>
+
+            {/* Heart icon */}
+            <motion.span
+              aria-hidden="true"
+              className="
+                pointer-events-none
+                absolute
+                inset-0
+                flex
+                items-center
+                justify-center
+              "
+              initial={false}
+              animate={{
+                opacity: isHeartActive ? 1 : 0,
+                scale: isHeartActive ? 1 : 0.75,
+                y: isHeartActive ? 0 : 3,
+              }}
+              transition={iconTransition}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-[0.68em] w-[0.68em] fill-[#17130d]"
+                focusable="false"
+              >
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+            </motion.span>
+          </motion.span>{" "}
+          of your
         </span>
         <br />
         <span>target audience.</span>
-      </motion.h1>
+      </h1>
 
-      {/* Description */}
-      <motion.p
+      {/* Paragraph: visible immediately */}
+      <p
         className="
           mt-7
           max-w-xl
@@ -173,51 +200,39 @@ const HeroContent = () => {
           leading-[1.85]
           tracking-[-0.005em]
           text-[#a7a39b]
-
           sm:mt-8
           sm:text-[15px]
+          max-[550px]:mt-6
+          max-[550px]:text-[13px]
+          max-[550px]:leading-[1.7]
         "
-        initial={{ opacity: 0, y: 25 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.8,
-          delay: 0.4,
-          ease: [0.22, 1, 0.36, 1],
-        }}
       >
         We craft high-conversion online experiences using brand storytelling,
         web development, SEO, and performance marketing to turn clicks into
         global loyal communities.
-      </motion.p>
+      </p>
 
-      {/* Global CTA buttons */}
-      <motion.div
+      {/* Buttons: visible immediately */}
+      <div
         className="
           mt-8
           flex
           w-full
           flex-col
           gap-3
-
           sm:mt-9
           sm:w-auto
           sm:flex-row
           sm:items-center
+          max-[550px]:mt-6
         "
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.7,
-          delay: 0.55,
-          ease: [0.22, 1, 0.36, 1],
-        }}
       >
         <GoldButton to="/portfolio">Explore Our Work</GoldButton>
 
         <OutlineButton to="/services">Services &amp; Solutions</OutlineButton>
-      </motion.div>
+      </div>
 
-      {/* Brands */}
+      {/* Brand logos remain unchanged */}
       <HeroBrandLogos />
     </div>
   );

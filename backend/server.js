@@ -9,6 +9,7 @@ import adminRouter from "./routes/adminRoutes.js";
 import mediaRouter from "./routes/mediaRoutes.js";
 import websiteRouter from "./routes/websiteRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
+import howWeHelpRouter from "./routes/howWeHelpRoutes.js";
 
 const app = express();
 
@@ -56,6 +57,8 @@ app.use("/api/media", mediaRouter);
 app.use("/api/website", websiteRouter);
 
 app.use("/api/review", reviewRouter);
+
+app.use("/api/how-we-help", howWeHelpRouter);
 
 /*
 |--------------------------------------------------------------------------

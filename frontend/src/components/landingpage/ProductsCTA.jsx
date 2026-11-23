@@ -10,13 +10,12 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 
 import OutlineButton from "../global/OutlineButton";
 
 /* -------------------------------------------------------------------------- */
-/* Packages                                                                   */
+/* Packages                                                                    */
 /* -------------------------------------------------------------------------- */
 
 const PACKAGES = [
@@ -48,43 +47,14 @@ const PACKAGES = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/* Gold Pulse                                                                 */
+/* Animation Constants                                                         */
 /* -------------------------------------------------------------------------- */
 
-const GoldPulse = ({ className = "", delay = 0, size = "small" }) => {
-  const sizeClasses = size === "large" ? "h-[7px] w-[7px]" : "h-[4px] w-[4px]";
-
-  return (
-    <motion.span
-      aria-hidden="true"
-      initial={{
-        opacity: 0.25,
-        scale: 0.8,
-      }}
-      animate={{
-        opacity: [0.25, 0.95, 0.25],
-        scale: [0.8, 1.35, 0.8],
-      }}
-      transition={{
-        duration: 3.2,
-        delay,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-      className={`
-        absolute
-        rounded-full
-        bg-[#c9a66b]
-        shadow-[0_0_10px_rgba(201,166,107,0.55),0_0_28px_rgba(201,166,107,0.18)]
-        ${sizeClasses}
-        ${className}
-      `}
-    />
-  );
-};
+const EASE_STANDARD = [0.22, 1, 0.36, 1];
+const EASE_SMOOTH = [0.16, 1, 0.3, 1];
 
 /* -------------------------------------------------------------------------- */
-/* Floating Growth Element                                                    */
+/* Floating Growth Element                                                     */
 /* -------------------------------------------------------------------------- */
 
 const GrowthElement = ({
@@ -147,7 +117,7 @@ const GrowthElement = ({
 };
 
 /* -------------------------------------------------------------------------- */
-/* Background Accents                                                         */
+/* Background Accents                                                          */
 /* -------------------------------------------------------------------------- */
 
 const BackgroundAccents = () => {
@@ -230,24 +200,6 @@ const BackgroundAccents = () => {
           bg-[#c9a66b]/[0.035]
         "
       />
-
-      <GoldPulse className="left-[8%] top-[17%]" delay={0} size="large" />
-
-      <GoldPulse className="left-[22%] top-[67%]" delay={1.1} />
-
-      <GoldPulse className="left-[39%] top-[22%]" delay={0.65} />
-
-      <GoldPulse className="left-[51%] top-[82%]" delay={1.7} size="large" />
-
-      <GoldPulse className="left-[67%] top-[13%]" delay={0.9} />
-
-      <GoldPulse className="left-[78%] top-[61%]" delay={1.4} size="large" />
-
-      <GoldPulse className="left-[91%] top-[30%]" delay={2.1} />
-
-      <GoldPulse className="left-[84%] top-[88%]" delay={0.35} />
-
-      <GoldPulse className="left-[15%] top-[91%]" delay={2.4} />
 
       <GrowthElement
         icon={Search}
@@ -344,146 +296,25 @@ const BackgroundAccents = () => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Scroll Driven Word Reveal                                                  */
+/* Package Row                                                                 */
 /* -------------------------------------------------------------------------- */
 
-const RevealWord = ({ children, progress, start, end, className = "" }) => {
-  const y = useTransform(progress, [start, end], ["90%", "0%"]);
-
-  const opacity = useTransform(progress, [start, end], [0, 1]);
-
-  return (
-    <span
-      className="
-        relative
-        inline-block
-        overflow-hidden
-        align-bottom
-      "
-    >
-      <motion.span
-        style={{
-          y,
-          opacity,
-        }}
-        className={`
-          inline-block
-          ${className}
-        `}
-      >
-        {children}
-      </motion.span>
-    </span>
-  );
-};
-
-/* -------------------------------------------------------------------------- */
-/* Reveal Title                                                               */
-/* -------------------------------------------------------------------------- */
-
-const RevealTitle = ({ progress, isSmallScreen = false }) => {
-  const firstLine = ["Choose", "the"];
-  const secondLine = ["next", "move."];
-
-  /*
-   * Desktop:
-   * The title keeps the original reveal timing.
-   *
-   * Mobile/tablet:
-   * The complete title finishes much earlier so the
-   * user does not need to scroll excessively just
-   * to reveal the heading.
-   */
-
-  const revealDuration = isSmallScreen ? 0.14 : 0.24;
-
-  const firstLineSpacing = isSmallScreen ? 0.045 : 0.08;
-
-  const secondLineStart = isSmallScreen ? 0.075 : 0.18;
-
-  const secondLineSpacing = isSmallScreen ? 0.045 : 0.08;
-
-  return (
-    <h2
-      className="
-        max-w-[920px]
-        font-display
-        text-[clamp(48px,7.2vw,104px)]
-        font-normal
-        leading-[0.9]
-        tracking-[-0.065em]
-        text-[#f5f3ee]
-      "
-    >
-      <span className="block">
-        {firstLine.map((word, index) => {
-          const start = index * firstLineSpacing;
-
-          const end = start + revealDuration;
-
-          return (
-            <span key={word}>
-              <RevealWord progress={progress} start={start} end={end}>
-                {word}
-              </RevealWord>
-
-              {index < firstLine.length - 1 && (
-                <span className="inline-block">&nbsp;</span>
-              )}
-            </span>
-          );
-        })}
-      </span>
-
-      <span className="block text-[#c9a66b]">
-        {secondLine.map((word, index) => {
-          const start = secondLineStart + index * secondLineSpacing;
-
-          const end = start + revealDuration;
-
-          return (
-            <span key={word}>
-              <RevealWord
-                progress={progress}
-                start={start}
-                end={end}
-                className="text-[#c9a66b]"
-              >
-                {word}
-              </RevealWord>
-
-              {index < secondLine.length - 1 && (
-                <span className="inline-block">&nbsp;</span>
-              )}
-            </span>
-          );
-        })}
-      </span>
-    </h2>
-  );
-};
-
-/* -------------------------------------------------------------------------- */
-/* Package Row                                                                */
-/* -------------------------------------------------------------------------- */
-
-const PackageRow = ({ packageData, index, progress }) => {
-  const start = 0.38 + index * 0.08;
-  const end = 0.51 + index * 0.08;
-
-  const y = useTransform(progress, [start, end], [42, 0]);
-
-  const opacity = useTransform(progress, [start, end], [0, 1]);
-
-  const lineScale = useTransform(progress, [start, end], [0, 1]);
-
+const PackageRow = ({ packageData }) => {
   const Icon = packageData.icon;
 
   return (
     <motion.article
-      style={{
-        y,
-        opacity,
+      initial={{
+        opacity: 0,
+        y: 24,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.7,
+        ease: EASE_STANDARD,
       }}
       className="
         group
@@ -496,8 +327,17 @@ const PackageRow = ({ packageData, index, progress }) => {
       "
     >
       <motion.div
+        initial={{
+          scaleX: 0,
+        }}
+        animate={{
+          scaleX: 1,
+        }}
+        transition={{
+          duration: 0.8,
+          ease: EASE_STANDARD,
+        }}
         style={{
-          scaleX: lineScale,
           transformOrigin: "left",
         }}
         className="
@@ -651,114 +491,21 @@ const PackageRow = ({ packageData, index, progress }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Products CTA                                                               */
+/* Products CTA                                                                */
 /* -------------------------------------------------------------------------- */
 
 const ProductsCTA = () => {
-  const sectionRef = useRef(null);
-
-  /*
-   * Detect phone + tablet.
-   *
-   * This only controls animation physics/timing.
-   * It does not change the component layout.
-   */
-
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 1023px)");
-
-    const updateScreenSize = () => {
-      setIsSmallScreen(mediaQuery.matches);
-    };
-
-    updateScreenSize();
-
-    mediaQuery.addEventListener("change", updateScreenSize);
-
-    return () => {
-      mediaQuery.removeEventListener("change", updateScreenSize);
-    };
-  }, []);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  /*
-   * ------------------------------------------------------------------------
-   * Scroll smoothing
-   * ------------------------------------------------------------------------
-   *
-   * Phone/tablet:
-   * Faster and lighter spring so the animation catches
-   * up with finger scrolling instead of feeling stuck.
-   *
-   * Desktop:
-   * Keep the original weighted spring.
-   */
-
-  const sequenceProgress = useSpring(
-    scrollYProgress,
-    isSmallScreen
-      ? {
-          stiffness: 185,
-          damping: 34,
-          mass: 0.2,
-          restDelta: 0.001,
-        }
-      : {
-          stiffness: 110,
-          damping: 28,
-          mass: 0.35,
-          restDelta: 0.001,
-        },
-  );
-
-  /* ---------------------------------------------------------------------- */
-  /* Title                                                                   */
-  /* ---------------------------------------------------------------------- */
-
-  const titleOpacity = useTransform(sequenceProgress, [0, 0.06], [0, 1]);
-
-  /* ---------------------------------------------------------------------- */
-  /* Cards                                                                   */
-  /* ---------------------------------------------------------------------- */
-
-  const cardsOpacity = useTransform(sequenceProgress, [0.44, 0.49], [0, 1]);
-
-  /* ---------------------------------------------------------------------- */
-  /* CTA                                                                     */
-  /* ---------------------------------------------------------------------- */
-
-  const ctaOpacity = useTransform(sequenceProgress, [0.76, 0.9], [0, 1]);
-
-  /* ---------------------------------------------------------------------- */
-  /* Bottom Meta                                                             */
-  /* ---------------------------------------------------------------------- */
-
-  const metaOpacity = useTransform(sequenceProgress, [0.82, 0.95], [0, 1]);
-
   return (
     <section
-      ref={sectionRef}
       className="
         relative
-        min-h-[350vh]
-        bg-[#080907]
+        bg-black
         text-[#f5f3ee]
       "
     >
-      {/* ================================================================== */}
-      {/* STICKY VIEWPORT                                                     */}
-      {/* ================================================================== */}
-
       <div
         className="
-          sticky
-          top-0
+          relative
           flex
           min-h-screen
           w-full
@@ -768,9 +515,7 @@ const ProductsCTA = () => {
       >
         <BackgroundAccents />
 
-        {/* ================================================================= */}
-        {/* CONTENT                                                           */}
-        {/* ================================================================= */}
+        {/* CONTENT */}
 
         <div
           className="
@@ -785,9 +530,7 @@ const ProductsCTA = () => {
             lg:py-[85px]
           "
         >
-          {/* ============================================================= */}
-          {/* HEADER                                                         */}
-          {/* ============================================================= */}
+          {/* HEADER */}
 
           <div
             className="
@@ -802,8 +545,17 @@ const ProductsCTA = () => {
             {/* Left intro */}
 
             <motion.div
-              style={{
-                opacity: titleOpacity,
+              initial={{
+                opacity: 0,
+                y: 20,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.7,
+                ease: EASE_STANDARD,
               }}
               className="flex flex-col"
             >
@@ -848,42 +600,77 @@ const ProductsCTA = () => {
 
             {/* Main title */}
 
-            <RevealTitle
-              progress={sequenceProgress}
-              isSmallScreen={isSmallScreen}
-            />
+            <motion.h2
+              initial={{
+                opacity: 0,
+                y: 30,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.9,
+                delay: 0.08,
+                ease: EASE_SMOOTH,
+              }}
+              className="
+                max-w-[920px]
+                font-display
+                text-[clamp(48px,7.2vw,104px)]
+                font-normal
+                leading-[0.9]
+                tracking-[-0.065em]
+                text-[#f5f3ee]
+              "
+            >
+              <span className="block">Choose the</span>
+
+              <span className="block text-[#c9a66b]">next move.</span>
+            </motion.h2>
           </div>
 
-          {/* ============================================================= */}
-          {/* PACKAGES                                                       */}
-          {/* ============================================================= */}
+          {/* PACKAGES */}
 
           <motion.div
-            style={{
-              opacity: cardsOpacity,
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.8,
+              delay: 0.25,
+              ease: EASE_STANDARD,
             }}
             className="
               mt-[48px]
               max-[700px]:mt-[38px]
             "
           >
-            {PACKAGES.map((packageData, index) => (
-              <PackageRow
-                key={packageData.id}
-                packageData={packageData}
-                index={index}
-                progress={sequenceProgress}
-              />
+            {PACKAGES.map((packageData) => (
+              <PackageRow key={packageData.id} packageData={packageData} />
             ))}
           </motion.div>
 
-          {/* ============================================================= */}
-          {/* FINAL CTA                                                      */}
-          {/* ============================================================= */}
+          {/* FINAL CTA */}
 
           <motion.div
-            style={{
-              opacity: ctaOpacity,
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.8,
+              delay: 0.45,
+              ease: EASE_STANDARD,
             }}
             className="
               relative
@@ -1003,13 +790,18 @@ const ProductsCTA = () => {
             </div>
           </motion.div>
 
-          {/* ============================================================= */}
-          {/* BOTTOM META                                                    */}
-          {/* ============================================================= */}
+          {/* BOTTOM META */}
 
           <motion.div
-            style={{
-              opacity: metaOpacity,
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            transition={{
+              duration: 0.7,
+              delay: 0.6,
             }}
             className="
               mt-[30px]
@@ -1025,7 +817,7 @@ const ProductsCTA = () => {
           >
             <span>Strategy · Creation · Growth</span>
 
-            <span>Being IBAN Digital</span>
+            <span>Being Iban Digital</span>
           </motion.div>
         </div>
       </div>

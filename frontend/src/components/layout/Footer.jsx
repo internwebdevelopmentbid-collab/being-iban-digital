@@ -1,12 +1,19 @@
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useSpring,
+  useTransform,
+  useReducedMotion,
+} from "framer-motion";
+
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 
 import logo from "../../assets/bid-black-logo.png";
 
-/* -------------------------------------------------------------------------- */
-/* ANIMATION                                                                  */
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   ANIMATION
+-------------------------------------------------------------------------- */
 
 const footerStagger = {
   hidden: {},
@@ -23,11 +30,9 @@ const footerItem = {
     opacity: 0,
     y: 22,
   },
-
   visible: {
     opacity: 1,
     y: 0,
-
     transition: {
       duration: 0.65,
       ease: [0.22, 1, 0.36, 1],
@@ -35,174 +40,150 @@ const footerItem = {
   },
 };
 
-/* -------------------------------------------------------------------------- */
-/* SOCIAL ICONS                                                               */
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   SOCIAL ICONS
+-------------------------------------------------------------------------- */
 
-const InstagramIcon = () => {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      className="h-[19px] w-[19px]"
-    >
-      <rect
-        x="3"
-        y="3"
-        width="18"
-        height="18"
-        rx="5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
+const InstagramIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+    className="h-[19px] w-[19px]"
+  >
+    <rect
+      x="3"
+      y="3"
+      width="18"
+      height="18"
+      rx="5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    />
 
-      <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.6" />
+    <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.6" />
 
-      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
-    </svg>
-  );
-};
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+  </svg>
+);
 
-const FacebookIcon = () => {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      className="h-[19px] w-[19px]"
-    >
-      <path
-        d="M13.5 21V13.2H16.1L16.5 10.15H13.5V8.2C13.5 7.32 13.75 6.72 15.03 6.72H16.6V4C16.33 3.96 15.39 3.88 14.3 3.88C12.02 3.88 10.46 5.27 10.46 7.84V10.15H8V13.2H10.46V21H13.5Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-};
+const FacebookIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+    className="h-[19px] w-[19px]"
+  >
+    <path
+      d="M13.5 21V13.2H16.1L16.5 10.15H13.5V8.2C13.5 7.32 13.75 6.72 15.03 6.72H16.6V4C16.33 3.96 15.39 3.88 14.3 3.88C12.02 3.88 10.46 5.27 10.46 7.84V10.15H8V13.2H10.46V21H13.5Z"
+      fill="currentColor"
+    />
+  </svg>
+);
 
-/* -------------------------------------------------------------------------- */
-/* SOCIAL LINK                                                                */
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   SOCIAL LINK
+-------------------------------------------------------------------------- */
 
-const SocialLink = ({ href, label, icon }) => {
-  return (
-    <motion.a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={label}
-      initial="rest"
-      whileHover="hover"
-      className="
-        group
-        flex
-        w-[165px]
-        items-center
-        justify-between
-        border-b
-        border-[#D8CFAF]
-        pb-[11px]
-        font-sans
-        text-[#30251A]
-        transition-colors
-        duration-300
-        hover:border-[#C6A66B]
-        hover:text-[#C6A66B]
-      "
-    >
-      <span className="flex items-center gap-3">
-        <motion.span
-          variants={{
-            rest: {
-              rotate: 0,
-              x: 0,
-              y: 0,
-              scale: 1,
-            },
-
-            hover: {
-              rotate: [0, -7, 7, -5, 5, 0],
-              x: [0, -1, 1, -1, 1, 0],
-              y: [0, 1, -1, 1, -1, 0],
-              scale: [1, 1.05, 1],
-
-              transition: {
-                duration: 0.5,
-                ease: "easeInOut",
-              },
-            },
-          }}
-          className="
-            flex
-            h-[34px]
-            w-[34px]
-            items-center
-            justify-center
-            rounded-full
-            border
-            border-[#D8CFAF]
-            text-[#30251A]
-            transition-colors
-            duration-300
-            group-hover:border-[#C6A66B]
-            group-hover:bg-[#C6A66B]
-            group-hover:text-[#FEFAE0]
-          "
-        >
-          {icon}
-        </motion.span>
-
-        <span className="font-medium text-[14px]">{label}</span>
-      </span>
-
+const SocialLink = ({ href, label, icon, reducedMotion }) => (
+  <motion.a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label={label}
+    initial="rest"
+    whileHover={reducedMotion ? "rest" : "hover"}
+    whileFocus={reducedMotion ? "rest" : "hover"}
+    className="
+      group flex w-[165px] items-center justify-between
+      border-b border-[#D8CFAF] pb-[11px]
+      font-sans text-[#30251A]
+      transition-colors duration-300
+      hover:border-[#C6A66B]
+      hover:text-[#C6A66B]
+    "
+  >
+    <span className="flex items-center gap-3">
       <motion.span
         variants={{
           rest: {
-            opacity: 0.55,
+            rotate: 0,
             x: 0,
             y: 0,
+            scale: 1,
           },
-
           hover: {
-            opacity: 1,
-            x: 3,
-            y: -3,
-
+            rotate: [0, -7, 7, -5, 5, 0],
+            x: [0, -1, 1, -1, 1, 0],
+            y: [0, 1, -1, 1, -1, 0],
+            scale: [1, 1.05, 1],
             transition: {
-              duration: 0.25,
-              ease: "easeOut",
+              duration: 0.5,
+              ease: "easeInOut",
             },
           },
         }}
-        className="text-[16px] text-[#30251A]"
+        className="
+          flex h-[34px] w-[34px] items-center justify-center
+          rounded-full border border-[#D8CFAF]
+          text-[#30251A]
+          transition-colors duration-300
+          group-hover:border-[#C6A66B]
+          group-hover:bg-[#C6A66B]
+          group-hover:text-[#FEFAE0]
+        "
       >
-        ↗
+        {icon}
       </motion.span>
-    </motion.a>
-  );
-};
 
-/* -------------------------------------------------------------------------- */
-/* FOOTER                                                                     */
-/* -------------------------------------------------------------------------- */
+      <span className="text-[14px] font-medium">{label}</span>
+    </span>
+
+    <motion.span
+      variants={{
+        rest: {
+          opacity: 0.55,
+          x: 0,
+          y: 0,
+        },
+        hover: {
+          opacity: 1,
+          x: 3,
+          y: -3,
+          transition: {
+            duration: 0.25,
+            ease: "easeOut",
+          },
+        },
+      }}
+      className="text-[16px] text-[#30251A]"
+    >
+      ↗
+    </motion.span>
+  </motion.a>
+);
+
+/* --------------------------------------------------------------------------
+   FOOTER
+-------------------------------------------------------------------------- */
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  /* ------------------------------------------------------------------------ */
-  /* SCROLL REVEAL                                                            */
-  /* ------------------------------------------------------------------------ */
-
   const revealRef = useRef(null);
+  const reducedMotion = useReducedMotion();
+
+  /* ------------------------------------------------------------------------
+     SCROLL REVEAL
+  ------------------------------------------------------------------------ */
 
   const { scrollYProgress } = useScroll({
     target: revealRef,
     offset: ["start end", "end end"],
   });
 
-  /* ------------------------------------------------------------------------ */
-  /* SMOOTH PROGRESS                                                          */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+     SMOOTH PROGRESS
+  ------------------------------------------------------------------------ */
 
   const progress = useSpring(scrollYProgress, {
     stiffness: 90,
@@ -210,11 +191,11 @@ const Footer = () => {
     mass: 0.7,
   });
 
-  /* ------------------------------------------------------------------------ */
-  /* FOOTER REVEAL                                                            */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+     FOOTER REVEAL
+  ------------------------------------------------------------------------ */
 
-  const clipPath = useTransform(
+  const animatedClipPath = useTransform(
     progress,
     [0, 0.08, 0.25, 0.5, 0.75, 1],
     [
@@ -227,128 +208,124 @@ const Footer = () => {
     ],
   );
 
-  const footerOpacity = useTransform(
+  const animatedFooterOpacity = useTransform(
     progress,
     [0, 0.15, 0.4, 1],
     [0.75, 0.9, 0.98, 1],
   );
 
-  /* ------------------------------------------------------------------------ */
-  /* BACKGROUND BRANDING                                                      */
-  /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------
+     BACKGROUND PARALLAX
+  ------------------------------------------------------------------------ */
 
-  const backgroundY = useTransform(progress, [0, 1], [35, 0]);
+  const animatedBackgroundY = useTransform(progress, [0, 1], [35, 0]);
 
-  const backgroundOpacity = useTransform(
+  const animatedBackgroundOpacity = useTransform(
     progress,
     [0, 0.35, 0.75, 1],
     [0, 0.35, 0.75, 1],
   );
 
-  /* ------------------------------------------------------------------------ */
-  /* BACK TO TOP                                                              */
-  /* ------------------------------------------------------------------------ */
+  /*
+   * Preserve the original scroll-linked animation while allowing users
+   * who prefer reduced motion to see the complete footer without clipping.
+   */
+  const footerClipPath = reducedMotion
+    ? "inset(0% 0% 0% 0%)"
+    : animatedClipPath;
+
+  const footerOpacity = reducedMotion ? 1 : animatedFooterOpacity;
+
+  const backgroundY = reducedMotion ? 0 : animatedBackgroundY;
+
+  const backgroundOpacity = reducedMotion ? 1 : animatedBackgroundOpacity;
+
+  /* ------------------------------------------------------------------------
+     BACK TO TOP
+  ------------------------------------------------------------------------ */
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: reducedMotion ? "auto" : "smooth",
     });
   };
+
+  const contentVariants = reducedMotion
+    ? {
+        hidden: { opacity: 1, y: 0 },
+        visible: { opacity: 1, y: 0 },
+      }
+    : footerStagger;
+
+  const itemVariants = reducedMotion
+    ? {
+        hidden: { opacity: 1, y: 0 },
+        visible: { opacity: 1, y: 0 },
+      }
+    : footerItem;
 
   return (
     <section
       ref={revealRef}
       className="
-        relative
-        z-0
-
+        relative z-0
         h-[680px]
-
         sm:h-[760px]
-
         min-[1050px]:h-[700px]
       "
     >
-      {/* ------------------------------------------------------------------ */}
-      {/* FOOTER                                                              */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ------------------------------------------------------------------
+          FOOTER
+      ------------------------------------------------------------------ */}
 
       <motion.footer
         style={{
-          clipPath,
+          clipPath: footerClipPath,
           opacity: footerOpacity,
         }}
         className="
-          absolute
-          bottom-0
-          left-0
-          right-0
-
+          absolute bottom-0 left-0 right-0
           h-[520px]
-
           overflow-hidden
-          border-t
-          border-[#D8CFAF]
+          border-t border-[#D8CFAF]
           bg-[#FEFAE0]
-
-          px-0
-          pb-[34px]
-          pt-[85px]
-
+          px-0 pb-[34px] pt-[85px]
           text-[#30251A]
-
-          sm:h-[560px]
-          sm:pt-[115px]
-
+          sm:h-[560px] sm:pt-[115px]
           min-[1050px]:h-[500px]
           min-[1050px]:pt-[85px]
         "
       >
-        {/* ---------------------------------------------------------------- */}
-        {/* LARGE BACKGROUND BRANDING                                       */}
-        {/* ---------------------------------------------------------------- */}
+        {/* ----------------------------------------------------------------
+            LARGE BACKGROUND BRANDING
+        ---------------------------------------------------------------- */}
 
         <motion.div
+          aria-hidden="true"
           style={{
             y: backgroundY,
             opacity: backgroundOpacity,
           }}
           className="
-            pointer-events-none
-            absolute
-            left-1/2
-            z-0
-
+            pointer-events-none absolute left-1/2 z-0
             -translate-x-1/2
-
-            select-none
-            overflow-hidden
-            whitespace-nowrap
-
-            font-display
-            font-normal
-            leading-[0.72]
+            select-none overflow-hidden whitespace-nowrap
+            font-display font-normal leading-[0.72]
             tracking-[-0.075em]
-
             text-[#30251A]/[0.075]
-
             bottom-[-30px]
-            w-full
-            text-[clamp(5.5rem,19vw,19rem)]
-
+            w-full text-[clamp(5.5rem,19vw,19rem)]
             max-[1049px]:bottom-[-12px]
             max-[1049px]:w-[125%]
             max-[1049px]:text-[clamp(4.8rem,15vw,9rem)]
             max-[1049px]:tracking-[-0.065em]
             max-[1049px]:-translate-x-5/13
-
             max-[749px]:bottom-[-4px]
             max-[749px]:w-[150%]
             max-[749px]:text-[clamp(3.4rem,15vw,6.2rem)]
             max-[749px]:tracking-[-0.06em]
             max-[749px]:-translate-x-5/16
-
             max-[420px]:bottom-[-2px]
             max-[420px]:w-[165%]
             max-[420px]:text-[clamp(3rem,15vw,5rem)]
@@ -357,9 +334,9 @@ const Footer = () => {
           <span className="inline-block">Being Iban Digital</span>
         </motion.div>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* CONTENT                                                          */}
-        {/* ---------------------------------------------------------------- */}
+        {/* ----------------------------------------------------------------
+            CONTENT
+        ---------------------------------------------------------------- */}
 
         <motion.div
           initial="hidden"
@@ -368,86 +345,69 @@ const Footer = () => {
             once: true,
             amount: 0.02,
           }}
-          variants={footerStagger}
+          variants={contentVariants}
           className="
-            relative
-            z-10
-
-            mx-auto
-            h-full
+            relative z-10
+            mx-auto h-full
             w-[calc(100%-40px)]
             max-w-[1400px]
-
             min-[1050px]:w-[calc(100%-80px)]
           "
         >
-          {/* -------------------------------------------------------------- */}
-          {/* MAIN FOOTER                                                    */}
-          {/* -------------------------------------------------------------- */}
+          {/* --------------------------------------------------------------
+              MAIN FOOTER
+          -------------------------------------------------------------- */}
 
           <div
             className="
-              grid
-              grid-cols-1
-              gap-[55px]
-
+              grid grid-cols-1 gap-[55px]
               min-[750px]:grid-cols-[1.15fr_1.85fr]
               min-[750px]:gap-[60px]
-
               min-[1050px]:grid-cols-[2.2fr_3fr]
               min-[1050px]:gap-[95px]
             "
           >
-            {/* ========================================================== */}
-            {/* BRAND                                                       */}
-            {/* ========================================================== */}
+            {/* BRAND */}
 
             <motion.div
-              variants={footerItem}
+              variants={itemVariants}
               className="
                 max-w-[520px]
-
                 min-[1050px]:max-w-[420px]
               "
             >
               <Link
                 to="/"
-                aria-label="Being Iban Digital"
-                className="flex shrink-0 items-center"
+                aria-label="Being Iban Digital home"
+                className="inline-flex shrink-0 items-center"
               >
                 <img
                   src={logo}
                   alt="Being Iban Digital"
+                  width="190"
+                  height="52"
+                  loading="lazy"
+                  decoding="async"
                   className="
-                    block
-                    h-[52px]
-                    w-auto
-                    max-w-[190px]
-                    object-contain
-
+                    block h-[52px] w-auto
+                    max-w-[190px] object-contain
                     min-[901px]:h-[52px]
-
                     max-[1024px]:h-[48px]
                     max-[1024px]:max-w-[175px]
-
                     max-[640px]:h-[44px]
                     max-[640px]:max-w-[160px]
                   "
+                  style={{
+                    aspectRatio: "190 / 52",
+                  }}
                 />
               </Link>
 
               <p
                 className="
-                  my-[24px]
-                  max-w-[400px]
-
-                  font-sans
-                  text-[15px]
-                  font-medium
-                  leading-[1.75]
-
-                  text-[#655343]
-
+                  my-[24px] max-w-[400px]
+                  font-sans text-[15px] font-medium
+                  leading-[1.75] text-[#655343]
                   sm:my-[30px_38px]
                 "
               >
@@ -456,38 +416,23 @@ const Footer = () => {
               </p>
             </motion.div>
 
-            {/* ========================================================== */}
-            {/* RIGHT SIDE NAVIGATION                                       */}
-            {/* ========================================================== */}
+            {/* RIGHT SIDE NAVIGATION */}
 
             <div
               className="
-                grid
-                grid-cols-2
-                gap-[42px]
-
-                sm:grid-cols-3
-                sm:gap-[35px]
-
+                grid grid-cols-2 gap-[42px]
+                sm:grid-cols-3 sm:gap-[35px]
                 min-[1050px]:grid-cols-3
                 min-[1050px]:gap-[65px]
               "
             >
-              {/* -------------------------------------------------------- */}
-              {/* EXPLORE                                                    */}
-              {/* -------------------------------------------------------- */}
+              {/* EXPLORE */}
 
-              <motion.div variants={footerItem} className="flex flex-col">
+              <motion.div variants={itemVariants} className="flex flex-col">
                 <h3
                   className="
-                    mb-[25px]
-
-                    font-sans
-                    text-[11px]
-                    font-bold
-                    tracking-[0.2em]
-                    text-[#30251A]
-
+                    mb-[25px] font-sans text-[11px]
+                    font-bold tracking-[0.2em] text-[#30251A]
                     sm:mb-[30px]
                   "
                 >
@@ -504,39 +449,19 @@ const Footer = () => {
                       key={path}
                       to={path}
                       className="
-                        group
-                        relative
-
-                        font-sans
-                        text-[14px]
-                        font-medium
-                        leading-[1.4]
-
+                        group relative
+                        font-sans text-[14px] font-medium leading-[1.4]
                         text-[#655343]
-
-                        transition-all
-                        duration-300
-
-                        hover:translate-x-2
-                        hover:text-[#C6A66B]
+                        transition-all duration-300
+                        hover:translate-x-2 hover:text-[#C6A66B]
                       "
                     >
                       <span
                         className="
-                          absolute
-                          -left-[16px]
-                          top-1/2
-
-                          h-px
-                          w-0
-
-                          -translate-y-1/2
-
+                          absolute -left-[16px] top-1/2
+                          h-px w-0 -translate-y-1/2
                           bg-[#C6A66B]
-
-                          transition-all
-                          duration-300
-
+                          transition-all duration-300
                           group-hover:w-[8px]
                         "
                       />
@@ -547,22 +472,13 @@ const Footer = () => {
                 </div>
               </motion.div>
 
-              {/* -------------------------------------------------------- */}
-              {/* FOLLOW                                                     */}
-              {/* -------------------------------------------------------- */}
+              {/* FOLLOW */}
 
-              <motion.div variants={footerItem} className="flex flex-col">
+              <motion.div variants={itemVariants} className="flex flex-col">
                 <h3
                   className="
-                    mb-[25px]
-
-                    font-sans
-                    text-[11px]
-                    font-bold
-                    tracking-[0.2em]
-
-                    text-[#30251A]
-
+                    mb-[25px] font-sans text-[11px]
+                    font-bold tracking-[0.2em] text-[#30251A]
                     sm:mb-[30px]
                   "
                 >
@@ -574,60 +490,48 @@ const Footer = () => {
                     href="https://www.instagram.com/being_iban_digital"
                     label="Instagram"
                     icon={<InstagramIcon />}
+                    reducedMotion={reducedMotion}
                   />
 
                   <SocialLink
                     href="https://www.facebook.com/people/Being-Iban-Digital/61591181224638"
                     label="Facebook"
                     icon={<FacebookIcon />}
+                    reducedMotion={reducedMotion}
                   />
                 </div>
               </motion.div>
             </div>
           </div>
 
-          {/* ---------------------------------------------------------------- */}
-          {/* DIVIDER                                                          */}
-          {/* ---------------------------------------------------------------- */}
+          {/* ----------------------------------------------------------------
+              DIVIDER
+          ---------------------------------------------------------------- */}
 
           <motion.div
-            variants={footerItem}
+            variants={itemVariants}
             className="
-              my-[45px]
-              h-px
-              w-full
-              bg-[#D8CFAF]
-
+              my-[45px] h-px w-full bg-[#D8CFAF]
               sm:my-[55px_25px]
             "
           />
 
-          {/* ---------------------------------------------------------------- */}
-          {/* BOTTOM                                                           */}
-          {/* ---------------------------------------------------------------- */}
+          {/* ----------------------------------------------------------------
+              BOTTOM
+          ---------------------------------------------------------------- */}
 
           <motion.div
-            variants={footerItem}
+            variants={itemVariants}
             className="
-              grid
-              grid-cols-1
-              items-center
-              gap-[24px]
-
+              grid grid-cols-1 items-center gap-[24px]
               min-[750px]:grid-cols-[1fr_auto_1fr]
               min-[750px]:gap-[30px]
             "
           >
             <p
               className="
-                m-0
-
-                font-sans
-                text-[12px]
-                font-medium
-                tracking-[0.01em]
-
-                text-[#806F5E]
+                m-0 font-sans text-[12px] font-medium
+                tracking-[0.01em] text-[#806F5E]
               "
             >
               © {currentYear} Being Iban Digital. All rights reserved.
@@ -637,66 +541,39 @@ const Footer = () => {
               type="button"
               onClick={scrollToTop}
               className="
-                group
-                order-3
-
-                inline-flex
-                items-center
-                justify-start
-                gap-3
-
-                border-0
-                bg-transparent
-                p-0
-
-                font-sans
-                text-[11px]
-                font-bold
-                tracking-[0.16em]
-
+                group order-3 inline-flex
+                items-center justify-start gap-3
+                border-0 bg-transparent p-0
+                font-sans text-[11px] font-bold tracking-[0.16em]
                 text-[#30251A]
-
-                transition-colors
-                duration-300
-
+                transition-colors duration-300
                 hover:text-[#C6A66B]
-
+                focus-visible:outline-none
+                focus-visible:ring-2 focus-visible:ring-[#C6A66B]
                 min-[750px]:justify-self-end
               "
             >
               <span>BACK TO TOP</span>
 
               <motion.span
-                initial={{
-                  y: 0,
-                }}
-                whileHover={{
-                  y: [-2, 2, -1, 1, 0],
-
-                  transition: {
-                    duration: 0.45,
-                    ease: "easeInOut",
-                  },
-                }}
+                initial={{ y: 0 }}
+                whileHover={
+                  reducedMotion
+                    ? undefined
+                    : {
+                        y: [-2, 2, -1, 1, 0],
+                        transition: {
+                          duration: 0.45,
+                          ease: "easeInOut",
+                        },
+                      }
+                }
                 className="
-                  inline-flex
-                  h-[34px]
-                  w-[34px]
-
-                  items-center
-                  justify-center
-
-                  border
-                  border-[#D8CFAF]
-
-                  text-[17px]
-                  font-medium
-
-                  text-[#30251A]
-
-                  transition-all
-                  duration-300
-
+                  inline-flex h-[34px] w-[34px]
+                  items-center justify-center
+                  border border-[#D8CFAF]
+                  text-[17px] font-medium text-[#30251A]
+                  transition-all duration-300
                   group-hover:border-[#C6A66B]
                   group-hover:bg-[#C6A66B]
                   group-hover:text-[#FEFAE0]

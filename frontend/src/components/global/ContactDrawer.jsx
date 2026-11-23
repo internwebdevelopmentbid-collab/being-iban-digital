@@ -2,15 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import toast from "react-hot-toast";
-import {
-  ArrowUpRight,
-  Check,
-  ChevronDown,
-  Mail,
-  MapPin,
-  Phone,
-  X,
-} from "lucide-react";
+import { ArrowUpRight, Check, Mail, MapPin, Phone, X } from "lucide-react";
 
 import api_url from "../../config/api";
 

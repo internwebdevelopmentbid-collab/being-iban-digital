@@ -1,94 +1,18 @@
-import { Fragment, useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-
-const ABOUT_TEXT =
-  "We build digital experiences that bring brands to life. From strategy and identity to design, development, and content, we create meaningful digital worlds that connect businesses with people and turn attention into lasting relationships.";
-
-const START_OPACITY = 0.15;
-const SPREAD = 0.8;
-const WORD_DURATION = 0.2;
-
-const getWordProgressRange = (index, count) => {
-  const start = count <= 1 ? 0 : (index / (count - 1)) * SPREAD;
-
-  return {
-    start,
-    end: Math.min(1, start + WORD_DURATION),
-  };
-};
-
-const getWordOpacity = (
-  progress,
-  { start, end },
-  startOpacity = START_OPACITY,
-) => {
-  if (progress <= start) {
-    return startOpacity;
-  }
-
-  if (progress >= end) {
-    return 1;
-  }
-
-  const wordProgress = (progress - start) / (end - start);
-
-  return startOpacity + (1 - startOpacity) * wordProgress;
-};
-
-const AboutWord = ({ children, progress, index, count, reducedMotion }) => {
-  const range = getWordProgressRange(index, count);
-
-  const opacity = useTransform(progress, (latest) =>
-    getWordOpacity(latest, range),
-  );
-
-  return (
-    <motion.span
-      aria-hidden="true"
-      style={
-        reducedMotion
-          ? undefined
-          : {
-              opacity,
-            }
-      }
-    >
-      {children}
-    </motion.span>
-  );
-};
+import { motion, useReducedMotion } from "framer-motion";
 
 const AboutUs = () => {
-  const sectionRef = useRef(null);
   const reducedMotion = useReducedMotion();
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  const words = ABOUT_TEXT.split(" ");
 
   return (
     <section
-      ref={sectionRef}
       className="
         relative
-        min-h-[220vh]
         overflow-x-clip
-        bg-white
-        text-[#171814]
+        py-30
       "
       aria-labelledby="about-us-heading"
     >
-      {/* ================================================================
-          AMBIENT GOLDEN DOTS
-      ================================================================= */}
+      {/* Ambient background */}
 
       <div
         className="
@@ -99,292 +23,6 @@ const AboutUs = () => {
         "
         aria-hidden="true"
       >
-        {/* Top left cluster */}
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.25, 0.7, 0.25],
-                  scale: [0.85, 1.15, 0.85],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 4.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }
-          }
-          className="
-            absolute
-            left-[8%]
-            top-[16%]
-            h-[7px]
-            w-[7px]
-            rounded-full
-            bg-[#c9a66b]
-            shadow-[0_0_18px_rgba(201,166,107,0.55)]
-          "
-        />
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.15, 0.55, 0.15],
-                  scale: [0.8, 1.25, 0.8],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 5.2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1.2,
-                }
-          }
-          className="
-            absolute
-            left-[15%]
-            top-[23%]
-            h-[4px]
-            w-[4px]
-            rounded-full
-            bg-[#9a7442]
-            shadow-[0_0_14px_rgba(154,116,66,0.45)]
-          "
-        />
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.2, 0.65, 0.2],
-                  scale: [0.75, 1.2, 0.75],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 4.8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 2,
-                }
-          }
-          className="
-            absolute
-            left-[22%]
-            top-[12%]
-            h-[5px]
-            w-[5px]
-            rounded-full
-            bg-[#c9a66b]
-            shadow-[0_0_16px_rgba(201,166,107,0.5)]
-          "
-        />
-
-        {/* Right cluster */}
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.18, 0.65, 0.18],
-                  scale: [0.8, 1.2, 0.8],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 5.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.8,
-                }
-          }
-          className="
-            absolute
-            right-[9%]
-            top-[24%]
-            h-[6px]
-            w-[6px]
-            rounded-full
-            bg-[#c9a66b]
-            shadow-[0_0_18px_rgba(201,166,107,0.55)]
-          "
-        />
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.15, 0.55, 0.15],
-                  scale: [0.75, 1.2, 0.75],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 4.2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1.8,
-                }
-          }
-          className="
-            absolute
-            right-[17%]
-            top-[15%]
-            h-[4px]
-            w-[4px]
-            rounded-full
-            bg-[#9a7442]
-            shadow-[0_0_13px_rgba(154,116,66,0.45)]
-          "
-        />
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.2, 0.7, 0.2],
-                  scale: [0.8, 1.25, 0.8],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 2.6,
-                }
-          }
-          className="
-            absolute
-            right-[24%]
-            top-[30%]
-            h-[5px]
-            w-[5px]
-            rounded-full
-            bg-[#c9a66b]
-            shadow-[0_0_15px_rgba(201,166,107,0.5)]
-          "
-        />
-
-        {/* Lower dots */}
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.15, 0.6, 0.15],
-                  scale: [0.8, 1.2, 0.8],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 4.7,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1.5,
-                }
-          }
-          className="
-            absolute
-            bottom-[24%]
-            left-[12%]
-            h-[5px]
-            w-[5px]
-            rounded-full
-            bg-[#9a7442]
-            shadow-[0_0_15px_rgba(154,116,66,0.45)]
-          "
-        />
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.2, 0.7, 0.2],
-                  scale: [0.75, 1.2, 0.75],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 5.4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.4,
-                }
-          }
-          className="
-            absolute
-            bottom-[18%]
-            right-[13%]
-            h-[6px]
-            w-[6px]
-            rounded-full
-            bg-[#c9a66b]
-            shadow-[0_0_18px_rgba(201,166,107,0.5)]
-          "
-        />
-
-        <motion.div
-          animate={
-            reducedMotion
-              ? undefined
-              : {
-                  opacity: [0.12, 0.5, 0.12],
-                  scale: [0.8, 1.15, 0.8],
-                }
-          }
-          transition={
-            reducedMotion
-              ? undefined
-              : {
-                  duration: 4.4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 2.2,
-                }
-          }
-          className="
-            absolute
-            bottom-[30%]
-            right-[28%]
-            h-[4px]
-            w-[4px]
-            rounded-full
-            bg-[#9a7442]
-            shadow-[0_0_13px_rgba(154,116,66,0.4)]
-          "
-        />
-
-        {/* Soft ambient glows */}
-
         <div
           className="
             absolute
@@ -412,20 +50,16 @@ const AboutUs = () => {
         />
       </div>
 
-      {/* ================================================================
-          STICKY CONTENT STAGE
-      ================================================================= */}
+      {/* Content */}
 
       <div
         className="
-          sticky
-          top-0
+          relative
           flex
-          min-h-screen
+          min-h-[650px]
           items-center
           overflow-hidden
           px-6
-          py-20
           sm:px-10
           lg:px-16
         "
@@ -445,9 +79,7 @@ const AboutUs = () => {
             lg:gap-20
           "
         >
-          {/* ============================================================
-              LEFT — TITLE
-          ============================================================ */}
+          {/* LEFT */}
 
           <div>
             <motion.div
@@ -489,16 +121,12 @@ const AboutUs = () => {
                     font-semibold
                     uppercase
                     tracking-[0.32em]
-                    text-[#8c653c]
+                    text-[#c9a66b]
                   "
                 >
                   ABOUT US
                 </p>
               </div>
-
-              {/* ========================================================
-                  TITLE REVEAL
-              ======================================================== */}
 
               <div className="mt-7 overflow-visible">
                 <motion.h2
@@ -533,7 +161,7 @@ const AboutUs = () => {
                     font-normal
                     leading-[0.9]
                     tracking-[-0.055em]
-                    text-[#8c653c]
+                    text-[#c9a66b]
                     will-change-transform
                   "
                 >
@@ -547,9 +175,7 @@ const AboutUs = () => {
             </motion.div>
           </div>
 
-          {/* ============================================================
-              RIGHT — WORD SCROLL REVEAL
-          ============================================================ */}
+          {/* RIGHT */}
 
           <div className="relative">
             <div
@@ -575,12 +201,14 @@ const AboutUs = () => {
                   font-semibold
                   uppercase
                   tracking-[0.28em]
-                  text-[#9a7442]
+                  text-[#c9a66b]
                 "
               >
                 Digital experiences / 01
               </span>
             </div>
+
+            {/* ORIGINAL STATIC PARAGRAPH */}
 
             <div
               className="
@@ -590,24 +218,13 @@ const AboutUs = () => {
                 font-normal
                 leading-[1.08]
                 tracking-[-0.045em]
-                text-[#171814]
+                text-[#d8d1c4]
               "
-              aria-label={ABOUT_TEXT}
             >
-              {words.map((word, index) => (
-                <Fragment key={`${word}-${index}`}>
-                  <AboutWord
-                    progress={scrollYProgress}
-                    index={index}
-                    count={words.length}
-                    reducedMotion={Boolean(reducedMotion)}
-                  >
-                    {word}
-                  </AboutWord>
-
-                  {index < words.length - 1 ? " " : null}
-                </Fragment>
-              ))}
+              We build digital experiences that bring brands to life. From
+              strategy and identity to design, development, and content, we
+              create meaningful digital worlds that connect businesses with
+              people and turn attention into lasting relationships.
             </div>
 
             <div
@@ -641,9 +258,7 @@ const AboutUs = () => {
           </div>
         </div>
 
-        {/* ================================================================
-            SUBTLE EDITORIAL GRID
-        ================================================================= */}
+        {/* Editorial grid */}
 
         <div
           className="

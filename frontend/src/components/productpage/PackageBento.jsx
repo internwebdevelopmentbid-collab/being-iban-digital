@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Hammer, ChessQueen, Rocket } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import PackageAmbientField from "./PackageAmbientField";
 import PackageBentoCard from "./PackageBentoCard";
@@ -30,7 +31,7 @@ const PACKAGES = [
       "A complete growth system combining creative, performance, analytics, and digital expansion.",
     features: [
       "Creative Designs — Reels + Posts",
-      "Social Media Management — 3 Platforms + Shoot 2 Visit",
+      "Social Media Management — 3 Platforms + 2 Shoot Visit",
       "Advanced Analytics + Scaling Strategy",
       "Performance Marketing + CRO",
       "Influencer & YouTube Marketing",
@@ -58,6 +59,7 @@ const PACKAGES = [
 
 const PackageBento = () => {
   const [activePackage, setActivePackage] = useState(null);
+  const navigate = useNavigate();
 
   const handleHover = (packageId) => {
     setActivePackage(packageId);
@@ -90,6 +92,7 @@ const PackageBento = () => {
         {PACKAGES.map((packageData, index) => (
           <motion.div
             key={packageData.id}
+            onClick={() => navigate(`/services/${packageData.id}`)}
             initial={{
               opacity: 0,
               y: 90,
@@ -109,7 +112,7 @@ const PackageBento = () => {
               delay: index * 0.14,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className="min-w-0"
+            className="min-w-0 cursor-pointer"
           >
             <PackageBentoCard
               packageData={packageData}

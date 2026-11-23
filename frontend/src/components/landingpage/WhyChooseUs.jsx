@@ -1,65 +1,12 @@
-import React, { useRef } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useSpring,
-  useReducedMotion,
-} from "framer-motion";
+import React, { memo, useState } from "react";
+
+import { motion, useReducedMotion } from "framer-motion";
 
 /* -------------------------------------------------------------------------- */
-/* SCREEN SIZE                                                                 */
+/* POINTS                                                                     */
 /* -------------------------------------------------------------------------- */
 
-function useIsSmallScreen(breakpoint = 1024) {
-  const [isSmallScreen, setIsSmallScreen] = React.useState(false);
-
-  React.useEffect(() => {
-    const media = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-
-    const update = () => {
-      setIsSmallScreen(media.matches);
-    };
-
-    update();
-
-    media.addEventListener("change", update);
-
-    return () => media.removeEventListener("change", update);
-  }, [breakpoint]);
-
-  return isSmallScreen;
-}
-
-/* -------------------------------------------------------------------------- */
-/* MOBILE                                                                      */
-/* -------------------------------------------------------------------------- */
-
-function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const media = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-
-    const update = () => {
-      setIsMobile(media.matches);
-    };
-
-    update();
-
-    media.addEventListener("change", update);
-
-    return () => media.removeEventListener("change", update);
-  }, [breakpoint]);
-
-  return isMobile;
-}
-
-/* -------------------------------------------------------------------------- */
-/* POINTS                                                                      */
-/* -------------------------------------------------------------------------- */
-
-const points = [
+const POINTS = [
   {
     number: "01",
     title: "Affordable Pricing",
@@ -88,529 +35,189 @@ const points = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/* GOLDEN BACKGROUND DOTS                                                      */
+/* ANIMATION CONSTANTS                                                        */
 /* -------------------------------------------------------------------------- */
 
-const goldenDots = [
-  {
-    top: "10%",
-    left: "12%",
-    size: 3,
-    delay: 0,
-    duration: 3.8,
-  },
-  {
-    top: "17%",
-    left: "72%",
-    size: 4,
-    delay: 0.8,
-    duration: 4.5,
-  },
-  {
-    top: "29%",
-    left: "91%",
-    size: 2,
-    delay: 1.7,
-    duration: 3.5,
-  },
-  {
-    top: "38%",
-    left: "20%",
-    size: 4,
-    delay: 0.4,
-    duration: 4.8,
-  },
-  {
-    top: "48%",
-    left: "58%",
-    size: 3,
-    delay: 1.2,
-    duration: 4,
-  },
-  {
-    top: "61%",
-    left: "87%",
-    size: 4,
-    delay: 2,
-    duration: 4.7,
-  },
-  {
-    top: "70%",
-    left: "10%",
-    size: 2,
-    delay: 0.6,
-    duration: 3.6,
-  },
-  {
-    top: "79%",
-    left: "68%",
-    size: 3,
-    delay: 1.5,
-    duration: 4.4,
-  },
-  {
-    top: "89%",
-    left: "34%",
-    size: 4,
-    delay: 2.3,
-    duration: 4.9,
-  },
-  {
-    top: "93%",
-    left: "91%",
-    size: 2,
-    delay: 0.9,
-    duration: 3.9,
-  },
-];
+const EASE = [0.22, 1, 0.36, 1];
+
+const TRAIL_ONE_ANIMATION = {
+  opacity: [0.05, 0.35, 0.05],
+  scaleX: [0.5, 1, 0.5],
+};
+
+const TRAIL_TWO_ANIMATION = {
+  opacity: [0.04, 0.3, 0.04],
+  scaleX: [0.6, 1, 0.6],
+};
 
 /* -------------------------------------------------------------------------- */
-/* POINT CARD                                                                  */
+/* POINT LIST                                                                 */
 /* -------------------------------------------------------------------------- */
 
-function PointCard({
-  point,
-  index,
-  progress,
-  isMobile,
-  isSmallScreen,
-  reducedMotion,
-}) {
-  /*
-   * Desktop:
-   *   01 -> 0.36
-   *   02 -> 0.47
-   *   03 -> 0.58
-   *   04 -> 0.69
-   *   05 -> 0.80
-   *
-   * Mobile/tablet:
-   *   01 -> 0.18
-   *   02 -> 0.27
-   *   03 -> 0.36
-   *   04 -> 0.45
-   *   05 -> 0.54
-   *
-   * This is the main change that makes the section
-   * require much less scrolling on smaller screens.
-   */
-
-  const cardStart = isSmallScreen ? 0.18 + index * 0.09 : 0.36 + index * 0.11;
-
-  const cardEnterEnd = isSmallScreen ? cardStart + 0.055 : cardStart + 0.065;
-
-  const stackX = index * (isMobile ? 10 : 22);
-
-  const stackY = index * (isMobile ? 12 : 18);
-
-  const entryProgress = useTransform(progress, (value) => {
-    if (value <= cardStart) {
-      return 0;
-    }
-
-    if (value >= cardEnterEnd) {
-      return 1;
-    }
-
-    const raw = (value - cardStart) / (cardEnterEnd - cardStart);
-
-    return raw * raw * (3 - 2 * raw);
-  });
-
-  const rawEntryX = useTransform(entryProgress, [0, 1], ["-150%", "0%"]);
-
-  const entryX = useSpring(
-    rawEntryX,
-    reducedMotion
-      ? {
-          stiffness: 1000,
-          damping: 100,
-          mass: 0.1,
-        }
-      : isSmallScreen
-        ? {
-            stiffness: 240,
-            damping: 34,
-            mass: 0.18,
-            restDelta: 0.001,
-          }
-        : {
-            stiffness: 140,
-            damping: 28,
-            mass: 0.5,
-            restDelta: 0.001,
-          },
-  );
-
-  const rawEntryY = useTransform(entryProgress, [0, 1], ["-5vh", "0vh"]);
-
-  const entryY = useSpring(
-    rawEntryY,
-    reducedMotion
-      ? {
-          stiffness: 1000,
-          damping: 100,
-          mass: 0.1,
-        }
-      : isSmallScreen
-        ? {
-            stiffness: 240,
-            damping: 34,
-            mass: 0.18,
-            restDelta: 0.001,
-          }
-        : {
-            stiffness: 140,
-            damping: 28,
-            mass: 0.5,
-            restDelta: 0.001,
-          },
-  );
-
-  const rawEntryScale = useTransform(entryProgress, [0, 1], [0.94, 1]);
-
-  const entryScale = useSpring(
-    rawEntryScale,
-    reducedMotion
-      ? {
-          stiffness: 1000,
-          damping: 100,
-          mass: 0.1,
-        }
-      : isSmallScreen
-        ? {
-            stiffness: 260,
-            damping: 36,
-            mass: 0.16,
-            restDelta: 0.001,
-          }
-        : {
-            stiffness: 150,
-            damping: 30,
-            mass: 0.45,
-            restDelta: 0.001,
-          },
-  );
+const PointList = memo(function PointList({ reducedMotion }) {
+  const [activeIndex, setActiveIndex] = useState(null);
 
   return (
-    <motion.div
-      className="
-        absolute
-        left-[4vw]
-        top-[42%]
-        w-[92vw]
-        max-w-[900px]
-        -translate-y-1/2
-        -translate-x-4
+    <div className="w-full max-w-[720px]">
+      <div className="mb-8 flex items-center gap-3">
+        <span className="h-px w-8 bg-[#C9A45C]/70" />
 
-        sm:left-[6vw]
-        sm:top-[40%]
-        sm:w-[84vw]
-      "
-      style={{
-        x: stackX,
-        y: stackY,
-        zIndex: 20 + index,
-      }}
-    >
-      <motion.div
-        className="
-          relative
-          overflow-hidden
-          rounded-2xl
-          border
-          border-[#C9A45C]/30
-          bg-[#11120f]
-          px-5
-          py-6
-          shadow-[0_24px_70px_rgba(0,0,0,0.65)]
+        <span className="text-[10px] uppercase tracking-[0.3em] text-[#C9A45C]/75 sm:text-[11px]">
+          What makes us different
+        </span>
+      </div>
 
-          sm:rounded-[24px]
-          sm:px-8
-          sm:py-9
+      <div className="divide-y divide-[#C9A45C]/10">
+        {POINTS.map((point, index) => {
+          const isActive = activeIndex === index;
 
-          lg:rounded-[28px]
-          lg:px-14
-          lg:py-14
-        "
-        style={{
-          x: entryX,
-          y: entryY,
-          scale: entryScale,
-          opacity: 1,
-          willChange: "transform",
-        }}
-      >
-        <div
-          className="
-            pointer-events-none
-            absolute
-            right-4
-            top-3
-            select-none
-            text-[52px]
-            font-light
-            leading-none
-            text-[#C9A45C]/[0.07]
+          return (
+            <motion.div
+              key={point.number}
+              className="group relative cursor-pointer py-5 sm:py-6"
+              onMouseEnter={() => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
+              onFocus={() => setActiveIndex(index)}
+              onBlur={() => setActiveIndex(null)}
+              tabIndex={0}
+              initial={
+                reducedMotion
+                  ? false
+                  : {
+                      opacity: 0,
+                      x: -20,
+                    }
+              }
+              animate={{
+                opacity: 1,
+                x: 0,
+              }}
+              transition={{
+                duration: 0.5,
+                delay: index * 0.08,
+                ease: EASE,
+              }}
+            >
+              {/* Active indicator */}
 
-            md:right-8
-            md:top-6
-            md:text-[100px]
-          "
-        >
-          {point.number}
-        </div>
+              <motion.div
+                className="absolute left-0 top-0 h-full w-px origin-top bg-[#C9A45C]"
+                initial={false}
+                animate={{
+                  scaleY: isActive ? 1 : 0,
+                  opacity: isActive ? 1 : 0,
+                }}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.3,
+                }}
+              />
 
-        <div className="relative z-10">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="h-px w-8 bg-[#C9A45C]/70" />
+              <div className="flex items-start gap-4 pl-4 sm:gap-6 sm:pl-6">
+                {/* Number */}
 
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#C9A45C]/75 sm:text-[11px]">
-              Why choose us
-            </span>
-          </div>
+                <span
+                  className={`
+                    mt-1 shrink-0 text-[10px] font-medium tracking-[0.2em]
+                    transition-colors duration-300
+                    sm:text-xs
+                    ${
+                      isActive
+                        ? "text-[#C9A45C]"
+                        : "text-[#C9A45C]/35 group-hover:text-[#C9A45C]/70"
+                    }
+                  `}
+                >
+                  {point.number}
+                </span>
 
-          <h3
-            className="
-              max-w-[700px]
-              text-2xl
-              font-medium
-              leading-[1.08]
-              tracking-[-0.04em]
-              text-[#F5F3EE]
+                <div className="min-w-0 flex-1">
+                  {/* Title */}
 
-              sm:text-4xl
+                  <div className="flex items-center justify-between gap-4">
+                    <motion.h3
+                      className={`
+                        text-xl font-medium leading-tight tracking-[-0.035em]
+                        transition-colors duration-300
+                        sm:text-2xl
+                        md:text-3xl
+                        ${
+                          isActive
+                            ? "text-[#F5F3EE]"
+                            : "text-[#F5F3EE]/45 group-hover:text-[#F5F3EE]/85"
+                        }
+                      `}
+                      animate={{
+                        x: isActive ? 6 : 0,
+                      }}
+                      transition={{
+                        duration: reducedMotion ? 0 : 0.35,
+                        ease: EASE,
+                      }}
+                    >
+                      {point.title}
+                    </motion.h3>
+                  </div>
 
-              md:text-6xl
-            "
-          >
-            {point.title}
-          </h3>
+                  {/* Description */}
 
-          <p
-            className="
-              mt-4
-              max-w-[650px]
-              text-sm
-              leading-6
-              text-[#C9A45C]/80
-
-              sm:mt-6
-              sm:text-lg
-              sm:leading-8
-            "
-          >
-            {point.text}
-          </p>
-        </div>
-
-        <div className="absolute bottom-0 left-0 h-px w-full bg-[#C9A45C]/20" />
-      </motion.div>
-    </motion.div>
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      height: isActive ? "auto" : 0,
+                      opacity: isActive ? 1 : 0,
+                      marginTop: isActive ? 12 : 0,
+                    }}
+                    transition={{
+                      duration: reducedMotion ? 0 : 0.3,
+                      ease: EASE,
+                    }}
+                    className="overflow-hidden"
+                  >
+                    <p className="max-w-[560px] text-sm leading-6 text-[#C9A45C]/70 sm:text-base sm:leading-7">
+                      {point.text}
+                    </p>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
   );
-}
+});
 
 /* -------------------------------------------------------------------------- */
-/* MAIN COMPONENT                                                              */
+/* MAIN COMPONENT                                                             */
 /* -------------------------------------------------------------------------- */
 
-export default function WhyChooseUs() {
-  const sectionRef = useRef(null);
-
-  const isMobile = useIsMobile();
-  const isSmallScreen = useIsSmallScreen();
+const WhyChooseUs = () => {
   const reducedMotion = useReducedMotion();
 
-  /*
-   * ------------------------------------------------------------------------
-   * SECTION HEIGHT
-   * ------------------------------------------------------------------------
-   *
-   * Desktop keeps the original long sequence.
-   *
-   * Phone/tablet get a significantly shorter section.
-   * This directly reduces the physical amount of scrolling required.
-   */
+  const trailOneAnimation = reducedMotion
+    ? {
+        opacity: 0.1,
+        scaleX: 1,
+      }
+    : TRAIL_ONE_ANIMATION;
 
-  const sectionHeight = isSmallScreen
-    ? 560 + points.length * 42
-    : isMobile
-      ? 620 + points.length * 58
-      : 700 + points.length * 70;
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  /*
-   * ------------------------------------------------------------------------
-   * SCROLL SMOOTHING
-   * ------------------------------------------------------------------------
-   *
-   * The spring is lighter on small screens so it doesn't
-   * create the impression that the animation is lagging
-   * behind the shorter scroll sequence.
-   */
-
-  const smoothScrollProgress = useSpring(
-    scrollYProgress,
-    reducedMotion
-      ? {
-          stiffness: 1000,
-          damping: 100,
-          mass: 0.1,
-        }
-      : isSmallScreen
-        ? {
-            stiffness: 220,
-            damping: 38,
-            mass: 0.18,
-            restDelta: 0.001,
-          }
-        : {
-            stiffness: 90,
-            damping: 30,
-            mass: 0.45,
-            restDelta: 0.001,
-          },
-  );
-
-  /*
-   * ------------------------------------------------------------------------
-   * TITLE X
-   * ------------------------------------------------------------------------
-   *
-   * Small screens finish the title movement much earlier.
-   */
-
-  const titleX = useTransform(
-    smoothScrollProgress,
-    isSmallScreen
-      ? [0, 0.05, 0.11, 0.18, 0.72, 0.82, 1]
-      : [0, 0.08, 0.18, 0.27, 0.91, 0.955, 1],
-    isSmallScreen
-      ? ["-105vw", "-8vw", "18vw", "24vw", "24vw", "75vw", "125vw"]
-      : isMobile
-        ? ["-105vw", "-8vw", "18vw", "24vw", "24vw", "75vw", "125vw"]
-        : ["-105vw", "-12vw", "28vw", "45vw", "45vw", "90vw", "155vw"],
-  );
-
-  /*
-   * ------------------------------------------------------------------------
-   * TITLE Y
-   * ------------------------------------------------------------------------
-   */
-
-  const titleY = useTransform(
-    smoothScrollProgress,
-    isSmallScreen
-      ? [0, 0.07, 0.18, 0.72, 0.84, 1]
-      : [0, 0.12, 0.27, 0.91, 0.96, 1],
-    ["6vh", "0vh", "-3vh", "-3vh", "-3vh", "-3vh"],
-  );
-
-  /*
-   * ------------------------------------------------------------------------
-   * TITLE SCALE
-   * ------------------------------------------------------------------------
-   */
-
-  const titleScale = useTransform(
-    smoothScrollProgress,
-    isSmallScreen
-      ? [0, 0.05, 0.11, 0.18, 0.72, 0.84, 1]
-      : [0, 0.08, 0.18, 0.27, 0.91, 0.96, 1],
-    isSmallScreen
-      ? [0.72, 0.92, 0.68, 0.58, 0.58, 0.58, 0.58]
-      : isMobile
-        ? [0.72, 0.92, 0.68, 0.58, 0.58, 0.58, 0.58]
-        : [0.82, 1, 0.76, 0.62, 0.62, 0.62, 0.62],
-  );
-
-  /*
-   * ------------------------------------------------------------------------
-   * CARD STACK EXIT
-   * ------------------------------------------------------------------------
-   *
-   * Desktop:
-   *   exit starts at 0.91
-   *
-   * Phone/tablet:
-   *   exit starts at 0.72
-   *
-   * This is what prevents the user from needing to
-   * scroll through a large dead zone after the cards.
-   */
-
-  const stackX = useTransform(
-    smoothScrollProgress,
-    isSmallScreen ? [0.72, 0.82, 1] : [0.91, 0.955, 1],
-    ["0vw", "45vw", "110vw"],
-  );
-
-  const stackY = useTransform(
-    smoothScrollProgress,
-    isSmallScreen ? [0.72, 0.84, 1] : [0.91, 0.96, 1],
-    ["0vh", "0vh", "-3vh"],
-  );
-
-  const stackOpacity = useTransform(
-    smoothScrollProgress,
-    isSmallScreen ? [0.72, 0.82, 1] : [0.91, 0.96, 1],
-    [1, 0.4, 0],
-  );
-
-  /*
-   * ------------------------------------------------------------------------
-   * FINAL BLACK SCREEN
-   * ------------------------------------------------------------------------
-   */
-
-  const finalBlackOpacity = useTransform(
-    smoothScrollProgress,
-    isSmallScreen ? [0.82, 0.91, 1] : [0.95, 0.98, 1],
-    [0, 0.7, 1],
-  );
-
-  /*
-   * ------------------------------------------------------------------------
-   * PROGRESS BAR
-   * ------------------------------------------------------------------------
-   */
-
-  const progressOpacity = useTransform(
-    smoothScrollProgress,
-    isSmallScreen ? [0.78, 0.9] : [0.91, 0.98],
-    [1, 0],
-  );
+  const trailTwoAnimation = reducedMotion
+    ? {
+        opacity: 0.1,
+        scaleX: 1,
+      }
+    : TRAIL_TWO_ANIMATION;
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative bg-black text-[#F5F3EE]"
-      style={{
-        height: `${sectionHeight}vh`,
-      }}
-    >
-      {/* ================================================================== */}
-      {/* STICKY VIEWPORT                                                     */}
-      {/* ================================================================== */}
-
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#080907]">
-        {/* ================================================================ */}
-        {/* AMBIENT GOLDEN GLOW                                               */}
-        {/* ================================================================ */}
+    <section className="relative min-h-screen bg-black text-[#F5F3EE]">
+      <div className="relative min-h-screen w-full overflow-hidden bg-black">
+        {/* ----------------------------------------------------------------
+            AMBIENT GOLDEN GLOW
+        ---------------------------------------------------------------- */}
 
         <div
           aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[1]
-            overflow-hidden
-          "
+          className="pointer-events-none absolute inset-0 z-[1] overflow-hidden"
         >
           <div
             className="
@@ -641,53 +248,9 @@ export default function WhyChooseUs() {
           />
         </div>
 
-        {/* ================================================================ */}
-        {/* GOLDEN DOTS                                                       */}
-        {/* ================================================================ */}
-
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[2]
-            overflow-hidden
-          "
-        >
-          {goldenDots.map((dot, index) => (
-            <motion.span
-              key={`golden-dot-${index}`}
-              className="
-                absolute
-                rounded-full
-                bg-[#C9A45C]
-              "
-              style={{
-                top: dot.top,
-                left: dot.left,
-                width: `${dot.size}px`,
-                height: `${dot.size}px`,
-                boxShadow: "0 0 10px 2px rgba(201,164,92,0.65)",
-                willChange: "transform, opacity",
-              }}
-              animate={{
-                opacity: reducedMotion ? 0.35 : [0.12, 0.75, 0.2, 0.95, 0.12],
-                scale: reducedMotion ? 1 : [0.65, 1.45, 0.75, 1.25, 0.65],
-              }}
-              transition={{
-                duration: dot.duration,
-                delay: dot.delay,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* ================================================================ */}
-        {/* PARTICLE TRAILS                                                   */}
-        {/* ================================================================ */}
+        {/* ----------------------------------------------------------------
+            DECORATIVE TRAILS
+        ---------------------------------------------------------------- */}
 
         <motion.div
           aria-hidden="true"
@@ -704,13 +267,10 @@ export default function WhyChooseUs() {
             via-[#C9A45C]/25
             to-transparent
           "
-          animate={{
-            opacity: reducedMotion ? 0.1 : [0.05, 0.35, 0.05],
-            scaleX: reducedMotion ? 1 : [0.5, 1, 0.5],
-          }}
+          animate={trailOneAnimation}
           transition={{
             duration: 5,
-            repeat: Infinity,
+            repeat: reducedMotion ? 0 : Infinity,
             ease: "easeInOut",
           }}
         />
@@ -730,154 +290,85 @@ export default function WhyChooseUs() {
             via-[#C9A45C]/20
             to-transparent
           "
-          animate={{
-            opacity: reducedMotion ? 0.1 : [0.04, 0.3, 0.04],
-            scaleX: reducedMotion ? 1 : [0.6, 1, 0.6],
-          }}
+          animate={trailTwoAnimation}
           transition={{
             duration: 6,
             delay: 1.5,
-            repeat: Infinity,
+            repeat: reducedMotion ? 0 : Infinity,
             ease: "easeInOut",
           }}
         />
 
-        {/* ================================================================ */}
-        {/* TITLE                                                              */}
-        {/* ================================================================ */}
+        {/* ----------------------------------------------------------------
+            CONTENT
+        ---------------------------------------------------------------- */}
 
-        <motion.div
+        <div
           className="
-            pointer-events-none
-            absolute
-            inset-y-0
-            left-0
+            relative
             z-10
-            flex
-            w-full
+            mx-auto
+            grid
+            min-h-screen
+            max-w-[1600px]
+            grid-cols-1
             items-center
+            gap-16
+            px-6
+            py-24
+            md:px-10
+            lg:grid-cols-[1.15fr_0.85fr]
+            lg:gap-10
+            lg:px-[6vw]
+            lg:py-16
           "
-          style={{
-            x: titleX,
-            y: titleY,
-            scale: titleScale,
-            willChange: "transform",
-          }}
         >
-          <div className="ml-[7vw] w-[75vw] max-w-[950px]">
-            <p className="mb-5 text-xs uppercase tracking-[0.35em] text-[#C9A45C]/75">
-              Why choose us?
-            </p>
+          {/* LEFT — INTERACTIVE LIST */}
 
-            <h2
-              className="
-                text-[17vw]
-                font-medium
-                leading-[0.82]
-                tracking-[-0.075em]
-                text-[#F5F3EE]
-
-                sm:text-[12vw]
-
-                md:text-[9vw]
-              "
-            >
-              <span className="text-[#C9A45C]">Why</span>
-
-              <br />
-
-              <span className="whitespace-nowrap">
-                choose us
-                <span className="text-[#C9A45C]"> ?</span>
-              </span>
-            </h2>
+          <div className="order-2 lg:order-1">
+            <PointList reducedMotion={reducedMotion} />
           </div>
-        </motion.div>
 
-        {/* ================================================================ */}
-        {/* CARD STACK                                                        */}
-        {/* ================================================================ */}
+          {/* RIGHT — TITLE */}
 
-        <motion.div
-          className="
-            absolute
-            inset-0
-            z-20
-          "
-          style={{
-            x: stackX,
-            y: stackY,
-            opacity: stackOpacity,
-            willChange: "transform, opacity",
-          }}
-        >
-          {points.map((point, index) => (
-            <PointCard
-              key={point.number}
-              point={point}
-              index={index}
-              progress={smoothScrollProgress}
-              isMobile={isMobile}
-              isSmallScreen={isSmallScreen}
-              reducedMotion={reducedMotion}
-            />
-          ))}
-        </motion.div>
+          <div className="order-1 flex items-center lg:order-2">
+            <div className="w-full lg:pl-[3vw]">
+              <p className="mb-5 text-xs uppercase tracking-[0.35em] text-[#C9A45C]/75">
+                Why choose us?
+              </p>
 
-        {/* ================================================================ */}
-        {/* PROGRESS BAR                                                      */}
-        {/* ================================================================ */}
+              <h2
+                className="
+                  text-[16vw]
+                  font-medium
+                  leading-[0.82]
+                  tracking-[-0.075em]
+                  text-[#F5F3EE]
+                  sm:text-[13vw]
+                  lg:text-[7vw]
+                "
+              >
+                <span className="text-[#C9A45C]">Why</span>
 
-        <motion.div
-          className="
-            absolute
-            bottom-7
-            left-1/2
-            z-50
-            h-px
-            w-[86vw]
-            max-w-[700px]
-            -translate-x-1/2
-            overflow-hidden
-            bg-[#C9A45C]/15
+                <br />
 
-            sm:w-[75vw]
-          "
-          style={{
-            opacity: progressOpacity,
-          }}
-        >
-          <motion.div
-            className="
-              h-full
-              w-full
-              origin-left
-              bg-[#C9A45C]/70
-            "
-            style={{
-              scaleX: smoothScrollProgress,
-              willChange: "transform",
-            }}
-          />
-        </motion.div>
+                <span className="whitespace-nowrap">
+                  choose us
+                  <span className="text-[#C9A45C]"> ?</span>
+                </span>
+              </h2>
 
-        {/* ================================================================ */}
-        {/* FINAL BLACK SCREEN                                                */}
-        {/* ================================================================ */}
-
-        <motion.div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[100]
-            bg-black
-          "
-          style={{
-            opacity: finalBlackOpacity,
-          }}
-        />
+              <p className="mt-8 max-w-[430px] text-sm leading-6 text-[#F5F3EE]/40 sm:text-base sm:leading-7">
+                We combine creative thinking, performance marketing, and
+                transparent communication to help businesses grow with
+                confidence.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
-}
+};
+
+export default WhyChooseUs;

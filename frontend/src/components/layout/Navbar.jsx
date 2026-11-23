@@ -1,9 +1,4 @@
-import {
-  AnimatePresence,
-  motion,
-  useMotionValueEvent,
-  useScroll,
-} from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, NavLink } from "react-router-dom";
 import { useState } from "react";
 
@@ -11,73 +6,29 @@ import logo from "../../assets/logo.png";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isNavbarVisible, setIsNavbarVisible] = useState(true);
-
-  const { scrollY } = useScroll();
-
-  useMotionValueEvent(scrollY, "change", (current) => {
-    const previous = scrollY.getPrevious();
-
-    if (previous === undefined) {
-      return;
-    }
-
-    const difference = current - previous;
-
-    if (current <= 10) {
-      setIsNavbarVisible(true);
-      return;
-    }
-
-    if (difference > 0) {
-      setIsNavbarVisible(false);
-      setIsMenuOpen(false);
-    } else if (difference < 0) {
-      setIsNavbarVisible(true);
-    }
-  });
+  const reducedMotion = useReducedMotion();
 
   const navItems = [
-    {
-      label: "Home",
-      path: "/",
-    },
-    {
-      label: "Our Works",
-      path: "/portfolio",
-    },
-    {
-      label: "Services & Solutions",
-      path: "/services",
-    },
+    { label: "Home", path: "/" },
+    { label: "Our Works", path: "/portfolio" },
+    { label: "Services & Solutions", path: "/services" },
   ];
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const closeMenu = () => setIsMenuOpen(false);
+
+  const menuTransition = reducedMotion
+    ? { duration: 0 }
+    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
 
   return (
     <>
-      <motion.header
-        initial={{
-          y: 0,
-        }}
-        animate={{
-          y: isNavbarVisible ? 0 : "-100%",
-        }}
-        transition={{
-          duration: 0.35,
-          ease: [0.22, 1, 0.36, 1],
-        }}
+      {/* Sticky Navbar */}
+      <header
         className="
-          fixed
-          left-0
-          top-0
-          z-[1000]
-          h-[82px]
+          sticky top-0 z-[1000]
+          h-[82px] min-h-[82px] shrink-0
           w-full
-          border-b
-          border-white/[0.10]
+          border-b border-white/[0.10]
           bg-black/[0.78]
           backdrop-blur-[20px]
           backdrop-saturate-[150%]
@@ -87,13 +38,10 @@ const Navbar = () => {
       >
         <div
           className="
-            mx-auto
-            flex
-            h-full
+            mx-auto flex h-full
             w-[calc(100%-40px)]
             max-w-[1400px]
-            items-center
-            justify-between
+            items-center justify-between
             min-[901px]:w-[calc(100%-80px)]
           "
         >
@@ -101,17 +49,18 @@ const Navbar = () => {
           <Link
             to="/"
             onClick={closeMenu}
-            aria-label="Being IBAN Digital"
+            aria-label="Being IBAN Digital home"
             className="flex shrink-0 items-center"
           >
             <img
               src={logo}
               alt="Being IBAN Digital"
+              width="190"
+              height="52"
+              fetchPriority="high"
+              decoding="async"
               className="
-                block
-                h-[52px]
-                w-auto
-                max-w-[190px]
+                block h-[52px] w-auto max-w-[190px]
                 object-contain
                 min-[901px]:h-[52px]
                 max-[1024px]:h-[48px]
@@ -119,15 +68,17 @@ const Navbar = () => {
                 max-[640px]:h-[44px]
                 max-[640px]:max-w-[160px]
               "
+              style={{
+                aspectRatio: "190 / 52",
+              }}
             />
           </Link>
 
-          {/* Desktop navigation */}
+          {/* Desktop Navigation */}
           <nav
+            aria-label="Main navigation"
             className="
-              hidden
-              items-center
-              gap-[38px]
+              hidden items-center gap-[38px]
               min-[901px]:flex
             "
           >
@@ -137,10 +88,10 @@ const Navbar = () => {
                 to={item.path}
                 end={item.path === "/"}
                 className={({ isActive }) =>
-                  `group relative font-sans text-[13px] font-medium tracking-[0.04em] transition-all duration-300 ${
-                    isActive
-                      ? "text-[#FFFFFF]"
-                      : "text-[#E8E5DE] hover:text-[#FFFFFF]"
+                  `group relative font-sans text-[13px] font-medium
+                  tracking-[0.04em] transition-colors duration-300
+                  ${
+                    isActive ? "text-white" : "text-[#E8E5DE] hover:text-white"
                   }`
                 }
               >
@@ -149,9 +100,13 @@ const Navbar = () => {
                     {item.label}
 
                     <span
-                      className={`absolute -bottom-2 left-0 h-px bg-[#C9A66B] transition-all duration-300 ${
-                        isActive ? "w-full" : "w-0 group-hover:w-full"
-                      }`}
+                      className={`
+                        absolute -bottom-2 left-0 h-px bg-[#C9A66B]
+                        ${
+                          reducedMotion ? "" : "transition-[width] duration-300"
+                        }
+                        ${isActive ? "w-full" : "w-0 group-hover:w-full"}
+                      `}
                     />
                   </>
                 )}
@@ -159,121 +114,90 @@ const Navbar = () => {
             ))}
           </nav>
 
-          {/* Mobile menu button */}
+          {/* Mobile Menu Button */}
           <button
             type="button"
             onClick={() => setIsMenuOpen((previous) => !previous)}
             aria-label={isMenuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
             className="
-              relative
-              flex
-              h-[42px]
-              w-[42px]
-              items-center
-              justify-center
+              relative flex h-[42px] w-[42px]
+              items-center justify-center
               min-[901px]:hidden
+              focus-visible:outline-none
+              focus-visible:ring-2 focus-visible:ring-[#C9A66B]
             "
           >
             <span
-              className={`absolute h-px w-[22px] bg-[#FFFFFF] transition-transform duration-300 ${
-                isMenuOpen ? "rotate-45" : "-translate-y-[4px]"
-              }`}
+              className={`
+                absolute h-px w-[22px] bg-white
+                ${reducedMotion ? "" : "transition-transform duration-300"}
+                ${isMenuOpen ? "rotate-45" : "-translate-y-[4px]"}
+              `}
             />
 
             <span
-              className={`absolute h-px w-[22px] bg-[#FFFFFF] transition-transform duration-300 ${
-                isMenuOpen ? "-rotate-45" : "translate-y-[4px]"
-              }`}
+              className={`
+                absolute h-px w-[22px] bg-white
+                ${reducedMotion ? "" : "transition-transform duration-300"}
+                ${isMenuOpen ? "-rotate-45" : "translate-y-[4px]"}
+              `}
             />
           </button>
         </div>
-      </motion.header>
+      </header>
 
-      {/* Mobile overlay + sidebar */}
+      {/* Mobile Overlay and Sidebar */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
-            {/* Mobile overlay */}
+            {/* Overlay */}
             <motion.button
               type="button"
               aria-label="Close navigation"
               onClick={closeMenu}
-              initial={{
-                opacity: 0,
-              }}
-              animate={{
-                opacity: 1,
-              }}
-              exit={{
-                opacity: 0,
-              }}
-              transition={{
-                duration: 0.25,
-              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={menuTransition}
               className="
-                fixed
-                inset-0
-                z-[1001]
-                bg-black/60
-                backdrop-blur-[3px]
+                fixed inset-0 z-[1001]
+                bg-black/60 backdrop-blur-[3px]
                 min-[901px]:hidden
               "
             />
 
-            {/* Mobile sidebar */}
+            {/* Sidebar */}
             <motion.aside
-              initial={{
-                x: "100%",
-              }}
-              animate={{
-                x: 0,
-              }}
-              exit={{
-                x: "100%",
-              }}
-              transition={{
-                duration: 0.35,
-                ease: [0.22, 1, 0.36, 1],
-              }}
+              id="mobile-navigation"
+              initial={reducedMotion ? false : { x: "100%" }}
+              animate={{ x: 0 }}
+              exit={reducedMotion ? undefined : { x: "100%" }}
+              transition={menuTransition}
               className="
-                fixed
-                right-0
-                top-0
-                z-[1002]
-                flex
-                h-screen
+                fixed right-0 top-0 z-[1002]
+                flex h-dvh
                 w-[min(420px,88vw)]
-                flex-col
-                border-l
-                border-[#292722]
+                flex-col overflow-y-auto
+                border-l border-[#292722]
                 bg-[#11120F]
                 min-[901px]:hidden
               "
             >
               <div
                 className="
-                  flex
-                  h-full
-                  flex-col
-                  px-7
-                  pb-[30px]
-                  pt-[105px]
-                  sm:px-[42px]
-                  sm:pb-[42px]
-                  sm:pt-[120px]
+                  flex min-h-full flex-col
+                  px-7 pb-[30px] pt-[105px]
+                  sm:px-[42px] sm:pb-[42px] sm:pt-[120px]
                 "
               >
-                {/* Sidebar heading */}
+                {/* Sidebar Heading */}
                 <div className="mb-12 flex items-center gap-[15px]">
                   <span
                     className="
-                      font-sans
-                      text-[9px]
-                      font-medium
-                      uppercase
-                      tracking-[0.2em]
-                      text-[#C9A66B]
+                      font-sans text-[9px] font-medium
+                      uppercase tracking-[0.2em] text-[#C9A66B]
                     "
                   >
                     MENU
@@ -282,8 +206,11 @@ const Navbar = () => {
                   <span className="h-px flex-1 bg-[#292722]" />
                 </div>
 
-                {/* Mobile links */}
-                <nav className="flex flex-col gap-[5px]">
+                {/* Mobile Links */}
+                <nav
+                  aria-label="Mobile navigation"
+                  className="flex flex-col gap-[5px]"
+                >
                   {navItems.map((item, index) => (
                     <NavLink
                       key={item.path}
@@ -291,31 +218,39 @@ const Navbar = () => {
                       end={item.path === "/"}
                       onClick={closeMenu}
                       className="
-                        group
-                        flex
-                        items-center
-                        gap-[18px]
+                        group flex items-center gap-[18px]
                         py-[15px]
                       "
                     >
                       {({ isActive }) => (
                         <>
-                          {/* Menu number */}
                           <span
-                            className={`font-sans text-[9px] font-medium tracking-[0.1em] transition-colors duration-300 ${
-                              isActive ? "text-[#C9A66B]" : "text-[#9A7442]"
-                            }`}
+                            className={`
+                              font-sans text-[9px] font-medium
+                              tracking-[0.1em] transition-colors duration-300
+                              ${isActive ? "text-[#C9A66B]" : "text-[#9A7442]"}
+                            `}
                           >
                             0{index + 1}
                           </span>
 
-                          {/* Menu label */}
                           <span
-                            className={`font-display text-[clamp(27px,6vw,38px)] font-normal leading-none tracking-[-0.025em] transition-all duration-300 ${
-                              isActive
-                                ? "translate-x-2 text-[#C9A66B]"
-                                : "text-[#F5F3EE] group-hover:translate-x-2 group-hover:text-[#C9A66B]"
-                            }`}
+                            className={`
+                              font-display
+                              text-[clamp(27px,6vw,38px)]
+                              font-normal leading-tight
+                              tracking-[-0.025em]
+                              ${
+                                reducedMotion
+                                  ? ""
+                                  : "transition-colors duration-300"
+                              }
+                              ${
+                                isActive
+                                  ? "text-[#C9A66B]"
+                                  : "text-[#F5F3EE] group-hover:text-[#C9A66B]"
+                              }
+                            `}
                           >
                             {item.label}
                           </span>
@@ -325,9 +260,9 @@ const Navbar = () => {
                   ))}
                 </nav>
 
-                {/* Decorative dots */}
-                <div className="mt-auto">
-                  <div className="mt-[35px] flex gap-[7px]">
+                {/* Decorative Dots */}
+                <div className="mt-auto pt-[35px]">
+                  <div className="flex gap-[7px]">
                     <span className="h-[5px] w-[5px] rounded-full bg-[#C9A66B]/70" />
                     <span className="h-[5px] w-[5px] rounded-full bg-[#C9A66B]/35" />
                     <span className="h-[5px] w-[5px] rounded-full bg-[#C9A66B]/15" />

@@ -469,7 +469,7 @@ const PackageBentoCard = ({ packageData, isActive, onHover }) => {
               tracking-[0.3em]
             "
           >
-            Tailored strategy
+            Click to know more
           </motion.span>
 
           <motion.span

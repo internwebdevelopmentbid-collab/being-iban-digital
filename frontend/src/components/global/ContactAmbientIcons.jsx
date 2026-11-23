@@ -87,30 +87,6 @@ const ContactAmbientIcons = () => {
       >
         <Target size={48} strokeWidth={0.8} />
       </motion.div>
-
-      {/* Ambient gold point */}
-
-      <motion.span
-        className="
-          absolute
-          left-[27%]
-          bottom-[21%]
-          h-[5px]
-          w-[5px]
-          rounded-full
-          bg-[#c9a66b]
-          shadow-[0_0_16px_rgba(201,166,107,0.8)]
-        "
-        animate={{
-          opacity: [0.08, 0.5, 0.12, 0.38, 0.08],
-          scale: [0.7, 1.4, 0.8, 1.2, 0.7],
-        }}
-        transition={{
-          duration: 3.9,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
     </div>
   );
 };

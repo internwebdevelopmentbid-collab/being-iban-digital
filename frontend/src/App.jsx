@@ -1,100 +1,99 @@
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
-
-import LandingPage from "./pages/LandingPage";
-import Portfolio from "./pages/Portfolio";
-import ProductPage from "./pages/ProductPage";
-import NotFound from "./pages/NotFound";
-
-import AdminApp from "./admin/AdminApp";
 import WhatsAppSticker from "./components/global/WhatsAppSticker";
-import Toaster from "./components/global/Toaster";
 import ContactDrawer from "./components/global/ContactDrawer";
 
-/*
- * =========================================================
- * SCROLL TO TOP
- * =========================================================
- *
- * Runs whenever the URL changes.
- *
- * This keeps every new route at the top instead of restoring
- * the previous scroll position.
- */
+import LandingPage from "./pages/LandingPage";
+
+/* -------------------------------------------------------------------------- */
+/* LAZY ROUTES                                                                */
+/* -------------------------------------------------------------------------- */
+
+const Portfolio = lazy(() => import("./pages/Portfolio"));
+const ProductPage = lazy(() => import("./pages/ProductPage"));
+const ServicePackages = lazy(() => import("./pages/ServicePackages"));
+const AdditionalPackages = lazy(() => import("./pages/AdditionalPackages"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminApp = lazy(() => import("./admin/AdminApp"));
+
+/* -------------------------------------------------------------------------- */
+/* SCROLL TO TOP                                                              */
+/* -------------------------------------------------------------------------- */
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
-  /*
-   * Disable browser's automatic scroll restoration.
-   */
-  window.history.scrollRestoration = "manual";
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
 
-  /*
-   * Scroll immediately when the route changes.
-   */
-  window.scrollTo(0, 0);
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+  }, [pathname]);
 
   return null;
 };
 
+/* -------------------------------------------------------------------------- */
+/* APP                                                                        */
+/* -------------------------------------------------------------------------- */
+
 const App = () => {
   const location = useLocation();
-
-  const isAdminArea =
-    location.pathname === "/admin" || location.pathname.startsWith("/admin/");
-
-  const isLoggedIn = Boolean(localStorage.getItem("token"));
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-
-    window.location.href = "/login";
-  };
+  const isAdminArea = location.pathname.startsWith("/admin");
 
   return (
-    <>
+    <div className="relative min-h-screen">
       <ScrollToTop />
 
-      {!isAdminArea && (
-        <Navbar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
-      )}
+      <div className="relative z-[2]">
+        {!isAdminArea && <Navbar />}
 
-      <Toaster />
+        <Toaster />
 
-      <Routes>
-        {/* =================================================
-            PUBLIC WEBSITE
-            ================================================= */}
+        <Suspense fallback={null}>
+          <Routes>
+            {/* Critical initial route */}
+            <Route path="/" element={<LandingPage />} />
 
-        <Route path="/" element={<LandingPage />} />
+            {/* Loaded only when requested */}
+            <Route path="/portfolio" element={<Portfolio />} />
 
-        <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/services" element={<ProductPage />} />
 
-        <Route path="/services" element={<ProductPage />} />
-        {/* =================================================
-            ADMIN APPLICATION
-            ================================================= */}
+            {/* Service package pages */}
+            <Route path="/services/:packageId" element={<ServicePackages />} />
 
-        <Route path="/admin/*" element={<AdminApp />} />
+            {/* Additional Service package pages */}
+            <Route
+              path="/additional-services/:serviceId"
+              element={<AdditionalPackages />}
+            />
 
-        {/* =================================================
-            PUBLIC FALLBACK
-            ================================================= */}
+            {/* Admin is code-split */}
+            <Route path="/admin/*" element={<AdminApp />} />
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
 
-      {!isAdminArea && (
-        <>
-          <Footer />
-          <WhatsAppSticker />
-          <ContactDrawer />
-        </>
-      )}
-    </>
+        {!isAdminArea && (
+          <>
+            <Footer />
+            <WhatsAppSticker />
+            <ContactDrawer />
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 
